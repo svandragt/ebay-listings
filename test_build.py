@@ -86,4 +86,24 @@ try:
     raise AssertionError("legacy_id accepted a path")
 except ValueError:
     pass
+
+# hub titles and descriptions
+assert re.search(r"<title>Casio for sale \| " + re.escape(build.C["site_name"]) + "</title>", read("/brand/casio/"))
+assert f"<title>example-seller-a on eBay | {build.C['site_name']}</title>" in read("/seller/example-seller-a/")
+for path in ("/", "/category/wristwatches/", "/brand/casio/", "/seller/example-seller-b/"):
+    d = re.search(r'<meta name="description" content="(.*?)">', read(path)).group(1)
+    assert len(d) <= 160 and "Prices from" in d, d
+hub_items = [{"title": "A very long listing title that keeps going and going for ages", "price": p, "price_text": "£" + p, "seller": "s"} for p in ("9.50", "10.00")]
+d1, d2 = build.hub_description(hub_items, "Thing"), build.hub_description(hub_items, "Thing", 2)
+assert d1 != d2 and d2.endswith(" Page 2.") and len(d2) <= 160 and "Prices from £9.50" in d1, (d1, d2)
+assert "…" in d1 and build.hub_description([{**hub_items[0], "price": ""}], "") .count("Prices from") == 0
+
+# Cloudflare preview hosts are noindex
+assert "https://:project.pages.dev/*\n  X-Robots-Tag: noindex" in hdr
+assert "https://:version.:project.pages.dev/*\n  X-Robots-Tag: noindex" in hdr
+
+# brand merge: "p louise" x2 and "PLouise" x1 are one indexable hub
+assert read("/brand/p-louise/").count('class="h-product"') == 3
+assert f"{site}/brand/p-louise/" in urls and not (out / "brand" / "plouise").exists()
+assert "noindex" not in read("/brand/p-louise/").split("</head>")[0].split('name="robots"')[-1][:40]
 print("ok")

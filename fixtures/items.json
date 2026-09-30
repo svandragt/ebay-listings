@@ -405,5 +405,143 @@
       }
     ],
     "conditionId": "1000"
+  },
+  {
+    "itemId": "v1|110000000009|0",
+    "legacyItemId": "110000000009",
+    "title": "P Louise eyeshadow palette number 9",
+    "price": {
+      "value": "6.00",
+      "currency": "GBP"
+    },
+    "condition": "New",
+    "categoryPath": "Health & Beauty|Make-up|Eyeshadow",
+    "categoryId": "183446",
+    "image": {
+      "imageUrl": "https://i.ebayimg.com/images/g/fake8/s-l1600.jpg"
+    },
+    "additionalImages": [
+      {
+        "imageUrl": "https://i.ebayimg.com/images/g/fake8x0/s-l1600.jpg"
+      },
+      {
+        "imageUrl": "https://i.ebayimg.com/images/g/fake8x1/s-l1600.jpg"
+      }
+    ],
+    "localizedAspects": [
+      {
+        "name": "Condition",
+        "value": "New"
+      },
+      {
+        "name": "Brand",
+        "value": "p louise"
+      }
+    ],
+    "description": "<p>Factory sealed box.</p>",
+    "itemWebUrl": "https://www.ebay.co.uk/itm/110000000008?hash=item1a2b3c&_trkparms=ispr%3D1&amp_trk=fake&mkcid=1&mkevt=1",
+    "seller": {
+      "username": "example-seller-b"
+    },
+    "itemCreationDate": "2026-09-19T10:00:00.000Z",
+    "estimatedAvailabilities": [
+      {
+        "estimatedAvailabilityStatus": "IN_STOCK",
+        "estimatedAvailableQuantity": 1
+      }
+    ],
+    "conditionId": "1000"
+  },
+  {
+    "itemId": "v1|110000000010|0",
+    "legacyItemId": "110000000010",
+    "title": "P Louise eyeshadow palette number 10",
+    "price": {
+      "value": "7.50",
+      "currency": "GBP"
+    },
+    "condition": "New",
+    "categoryPath": "Health & Beauty|Make-up|Eyeshadow",
+    "categoryId": "183446",
+    "image": {
+      "imageUrl": "https://i.ebayimg.com/images/g/fake8/s-l1600.jpg"
+    },
+    "additionalImages": [
+      {
+        "imageUrl": "https://i.ebayimg.com/images/g/fake8x0/s-l1600.jpg"
+      },
+      {
+        "imageUrl": "https://i.ebayimg.com/images/g/fake8x1/s-l1600.jpg"
+      }
+    ],
+    "localizedAspects": [
+      {
+        "name": "Condition",
+        "value": "New"
+      },
+      {
+        "name": "Brand",
+        "value": "p louise"
+      }
+    ],
+    "description": "<p>Factory sealed box.</p>",
+    "itemWebUrl": "https://www.ebay.co.uk/itm/110000000008?hash=item1a2b3c&_trkparms=ispr%3D1&amp_trk=fake&mkcid=1&mkevt=1",
+    "seller": {
+      "username": "example-seller-b"
+    },
+    "itemCreationDate": "2026-09-20T10:00:00.000Z",
+    "estimatedAvailabilities": [
+      {
+        "estimatedAvailabilityStatus": "IN_STOCK",
+        "estimatedAvailableQuantity": 1
+      }
+    ],
+    "conditionId": "1000"
+  },
+  {
+    "itemId": "v1|110000000011|0",
+    "legacyItemId": "110000000011",
+    "title": "P Louise eyeshadow palette number 11",
+    "price": {
+      "value": "5.25",
+      "currency": "GBP"
+    },
+    "condition": "New",
+    "categoryPath": "Health & Beauty|Make-up|Eyeshadow",
+    "categoryId": "183446",
+    "image": {
+      "imageUrl": "https://i.ebayimg.com/images/g/fake8/s-l1600.jpg"
+    },
+    "additionalImages": [
+      {
+        "imageUrl": "https://i.ebayimg.com/images/g/fake8x0/s-l1600.jpg"
+      },
+      {
+        "imageUrl": "https://i.ebayimg.com/images/g/fake8x1/s-l1600.jpg"
+      }
+    ],
+    "localizedAspects": [
+      {
+        "name": "Condition",
+        "value": "New"
+      },
+      {
+        "name": "Brand",
+        "value": "PLouise"
+      }
+    ],
+    "description": "<p>Factory sealed box.</p>",
+    "itemWebUrl": "https://www.ebay.co.uk/itm/110000000008?hash=item1a2b3c&_trkparms=ispr%3D1&amp_trk=fake&mkcid=1&mkevt=1",
+    "seller": {
+      "username": "example-seller-b"
+    },
+    "itemCreationDate": "2026-09-21T10:00:00.000Z",
+    "estimatedAvailabilities": [
+      {
+        "estimatedAvailabilityStatus": "IN_STOCK",
+        "estimatedAvailableQuantity": 1
+      }
+    ],
+    "conditionId": "1000"
   }
 ]

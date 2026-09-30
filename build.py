@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Fetch eBay listings (or load a fixture) and render the static site into _site/."""
-import argparse, base64, gzip, hashlib, html, json, os, re, shutil, sys, time, tomllib, unicodedata
+import argparse, base64, collections, gzip, hashlib, html, json, os, re, shutil, sys, time, tomllib, unicodedata
 import urllib.error, urllib.parse, urllib.request
 from datetime import datetime, timedelta, timezone
 from html.parser import HTMLParser
@@ -265,20 +265,47 @@ def item_list(items, start=1):
         for n, i in enumerate(items, start)]}
 
 
-def hub(out, sitemap, path, heading, items, kind=None, slug=None, link_groups=(), extra_ld=()):
+def short_title(t, limit=40):
+    if len(t) <= limit:
+        return t
+    cut = t[:limit - 1]
+    return (cut.rsplit(" ", 1)[0] if " " in cut and t[limit - 1] != " " else cut).rstrip(" ,-|:;/–") + "…"
+
+
+def hub_description(items, name, n=1):
+    """Generated meta description, at most 160 chars. Drops the second title, then the 'including' clause, to fit."""
+    sellers = {i["seller"] for i in items}
+    shops = next(iter(sellers)) if len(sellers) == 1 else f"{len(sellers)} eBay shops"
+    prices = [i for i in items if i["price"]]
+    price = f" Prices from {min(prices, key=lambda i: float(i['price']))['price_text']}." if prices else ""
+    tail = " Updated every 6 hours." + (f" Page {n}." if n > 1 else "")
+    titles = [short_title(i["title"]) for i in items[:2]]
+    count = f"{len(items)} listing{'' if len(items) == 1 else 's'}"
+    base = f"{name + ' for sale: ' if name else ''}{count} from {shops}"
+    options = [f", including {titles[0]}, {titles[1]} and more"] if len(titles) > 1 else []
+    options += [f", including {titles[0]} and more"] if titles else []
+    options.append("")
+    for inc in options:
+        d = f"{base}{inc}.{price}{tail}"
+        if len(d) <= 160:
+            return d
+    return d[:160]
+
+
+def hub(out, sitemap, path, heading, items, kind=None, slug=None, link_groups=(), extra_ld=(), title=None):
     """A listing page: paginated, self-canonical, noindex while it has too few items."""
     sellers = len({i["seller"] for i in items})
     summary = f"{len(items)} listings from {sellers} shop{'' if sellers == 1 else 's'}, updated every 6 hours"
     intro = read_intro(kind, slug) if kind else []
-    description = (intro[0] if intro else f"{heading}: {summary}.")[:160]
+    name = heading if kind in ("category", "brand") else ""
     thin = len(items) < MIN_HUB_ITEMS
     chunks = [items[i:i + PAGE_SIZE] for i in range(0, len(items), PAGE_SIZE)] or [[]]
     urls = [path if n == 1 else f"{path}page/{n}/" for n in range(1, len(chunks) + 1)]
     crumbs = [("Home", "/"), (heading, path)] if path != "/" else []
     for n, chunk in enumerate(chunks, 1):
         page(out, urls[n - 1], "hub.html",
-             title=f"{heading}{f' - page {n}' if n > 1 else ''} | {C['site_name']}",
-             description=description, heading=heading, intro=intro, summary=summary, items=chunk,
+             title=f"{title or heading}{f' - page {n}' if n > 1 else ''} | {C['site_name']}",
+             description=intro[0][:160] if intro else hub_description(items, name, n), heading=heading, intro=intro, summary=summary, items=chunk,
              robots="noindex,follow" if thin else None, link_groups=link_groups,
              pager=list(enumerate(urls, 1)) if len(urls) > 1 else [], current=n,
              crumbs=crumbs, card_url=f"https://{C['domain']}/usr/{slug}" if kind == "seller" else None,
@@ -349,12 +376,15 @@ def headers():
     csp = ("default-src 'self'; img-src 'self' data: https://i.ebayimg.com; "
            f"style-src 'sha256-{style_hash}'; script-src 'self'; connect-src 'self'; "
            "object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'")
+    noindex = "  X-Robots-Tag: noindex\n"
     return ("/*\n"
             f"  Content-Security-Policy: {csp}\n"
             "  Strict-Transport-Security: max-age=31536000\n"
             "  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()\n"
             "  Referrer-Policy: strict-origin-when-cross-origin\n"
-            "  X-Content-Type-Options: nosniff\n")
+            "  X-Content-Type-Options: nosniff\n"
+            f"\nhttps://:project.pages.dev/*\n{noindex}"
+            f"\nhttps://:version.:project.pages.dev/*\n{noindex}")
 
 
 def group(items, key, name):
@@ -363,6 +393,19 @@ def group(items, key, name):
         if i[key]:
             groups.setdefault(i[key], []).append(i)
     return sorted(((g[0][name], slug, g) for slug, g in groups.items()), key=lambda t: -len(t[2]))
+
+
+def merge_brands(items):
+    """'p louise', 'PLouise' and 'P. Louise' are one brand: show the most common spelling."""
+    spellings = {}
+    for i in items:
+        if i["brand"]:
+            spellings.setdefault(re.sub(r"[^a-z0-9]", "", slugify(i["brand"])), collections.Counter())[i["brand"]] += 1
+    for i in items:
+        if i["brand"]:
+            name = spellings[re.sub(r"[^a-z0-9]", "", slugify(i["brand"]))].most_common(1)[0][0]
+            i["brand"] = name.title() if name.islower() else name  # "p louise" reads as a typo in a heading
+            i["brand_slug"] = slugify(i["brand"])
 
 
 def build(items, out):
@@ -375,20 +418,22 @@ def build(items, out):
     shutil.rmtree(out, ignore_errors=True)
     items = sorted((prepare(r) for r in items), key=lambda i: i["created"], reverse=True)
     sitemap = []
+    merge_brands(items)
     cats, brands = group(items, "cat_slug", "cat"), group(items, "brand_slug", "brand")
     groups = [("Categories", [(n, f"/category/{s}/", len(g)) for n, s, g in cats]),
               ("Brands", [(n, f"/brand/{s}/", len(g)) for n, s, g in brands])]
-    hub(out, sitemap, "/", "Listings from " + " and ".join(C["sellers"]), items, link_groups=groups)
+    tagline = C.get("tagline")
+    hub(out, sitemap, "/", tagline or "Listings from " + " and ".join(C["sellers"]), items, link_groups=groups)
     for seller in C["sellers"]:
         org = {"@context": "https://schema.org", "@type": "Organization", "name": seller,
                "url": f"{C['site_url']}/seller/{seller}/", "sameAs": [f"https://{C['domain']}/usr/{seller}"]}
-        hub(out, sitemap, f"/seller/{seller}/", seller, [i for i in items if i["seller"] == seller], "seller", seller, extra_ld=[org])
+        hub(out, sitemap, f"/seller/{seller}/", seller, [i for i in items if i["seller"] == seller], "seller", seller, extra_ld=[org], title=f"{seller} on eBay")
     for name, slug, g in cats:
-        hub(out, sitemap, f"/category/{slug}/", name, g, "category", slug)
+        hub(out, sitemap, f"/category/{slug}/", name, g, "category", slug, title=f"{name} for sale")
     for name, slug, g in brands:
-        hub(out, sitemap, f"/brand/{slug}/", name, g, "brand", slug)
+        hub(out, sitemap, f"/brand/{slug}/", name, g, "brand", slug, title=f"{name} for sale")
     week_ago = (datetime.now(timezone.utc) - timedelta(days=7)).strftime("%Y-%m-%dT%H:%M:%S")
-    hub(out, sitemap, "/new/", "New this week", [i for i in items if i["created"] >= week_ago])
+    hub(out, sitemap, "/new/", "New this week", [i for i in items if i["created"] >= week_ago], title="New listings this week")
     for i in items:
         item_page(out, i)
 
