@@ -116,13 +116,15 @@ for d in item_dirs:
     if f"/item/{d}/" == sold_url:
         continue
     html = read(f"/item/{d}/")
+    if "<h2>More like this</h2>" not in html:
+        continue  # nothing relevant enough: the section is left out rather than padded
     assert html.count("<h2>More like this</h2>") == 1
     links = re.findall(r'<a class="u-url" href="(/item/[^"]+)">', html.split("<h2>More like this</h2>")[1])
     assert 0 < len(links) <= 6 and f"/item/{d}/" not in links, (d, links)
     assert 'fetchpriority="high"' not in html.split("<h2>More like this</h2>")[1]
     assert "<h3 class=\"p-name\">" in html.split("<h2>More like this</h2>")[1]
 watch = read("/item/" + next(d for d in item_dirs if d.startswith("110000000004"))).split("<h2>More like this</h2>")[1]
-assert watch.index("110000000006") < watch.index("110000000007") and "110000000001" in watch  # same category newest first, then same seller
+assert "110000000006" in watch and "110000000007" in watch and "110000000001" not in watch  # other watches yes, the same seller's teapot no
 
 # sold page
 sp = read(sold_url)

@@ -258,7 +258,7 @@ def prepare(raw):
         "price_text": money(price.get("value", ""), currency),
         "condition": raw.get("condition", ""),
         "condition_id": int(raw.get("conditionId") or 0),
-        "cat": cat, "cat_slug": slugify(cat),
+        "cat": cat, "cat_slug": slugify(cat), "cat_parent": "|".join((raw.get("categoryPath") or "").split("|")[:2]),
         "brand": brand, "brand_slug": slugify(brand) if brand else None,
         "seller": raw["seller"]["username"],
         "images": images, "image": images[0] if images else "",
@@ -371,11 +371,23 @@ def crumb_ld(crumbs):
         {"@type": "ListItem", "position": n, "name": name, "item": C["site_url"] + p} for n, (name, p) in enumerate(crumbs, 1)]}
 
 
+STOPWORDS = {"and", "the", "with", "for", "new", "set", "from", "all", "bundle", "x2", "x3", "x4", "x5", "x6", "x7", "x8", "x9"}
+
+
+def title_words(t):
+    return {w for w in re.findall(r"[a-z0-9]+", t.lower()) if len(w) > 2 and w not in STOPWORDS}
+
+
 def related(items, i):
-    """Other live items: same category first (items are newest first), then the same seller."""
-    others = [o for o in items if o["id"] != i["id"]]
-    same_cat = [o for o in others if o["cat_slug"] == i["cat_slug"]]
-    return (same_cat + [o for o in others if o["seller"] == i["seller"] and o["cat_slug"] != i["cat_slug"]])[:RELATED]
+    """Listings that share something real with this one: brand, category, or title words. The seller alone doesn't count."""
+    words = title_words(i["title"])
+    def score(o):
+        overlap = len(words & title_words(o["title"])) / (len(words | title_words(o["title"])) or 1)
+        return (3 * (bool(i["brand"]) and o["brand"] == i["brand"]) + 2 * (o["cat_slug"] == i["cat_slug"])
+                + (bool(i["cat_parent"]) and o["cat_parent"] == i["cat_parent"]) + 4 * overlap)
+    scored = [(score(o), o) for o in items if o["id"] != i["id"]]
+    # ponytail: 2 means at least a shared category or brand, or strong title overlap. Tune if pages look sparse.
+    return [o for sc, o in sorted((t for t in scored if t[0] >= 2), key=lambda t: -t[0])][:RELATED]
 
 
 def sold_page(out, i, more):
