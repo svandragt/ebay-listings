@@ -294,6 +294,10 @@ def group(items, key, name):
 
 
 def build(items, out):
+    env.globals["built"] = datetime.now(timezone.utc)
+    # Set by GitHub Actions, so each fork links to its own repo without extra config.
+    if repo := os.environ.get("GITHUB_REPOSITORY"):
+        env.globals["repo_url"] = f"{os.environ.get('GITHUB_SERVER_URL', 'https://github.com')}/{repo}"
     out = Path(out)
     shutil.rmtree(out, ignore_errors=True)
     items = sorted((prepare(r) for r in items), key=lambda i: i["created"], reverse=True)

@@ -65,3 +65,7 @@ The site includes a `404.html`. Cloudflare Pages serves it with a 404 status for
 2. Edit `site.toml` with your sellers, site URL, site name and marketplace.
 3. Add the secrets and the `CF_PAGES_PROJECT` variable.
 4. Create the Cloudflare Pages project and add your domain.
+
+## Licence
+
+This project is licensed under the GNU General Public License v3.0 or later. See [LICENSE](LICENSE).
