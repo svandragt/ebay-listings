@@ -24,7 +24,7 @@ button, .buy { padding: 0.35rem 0.75rem; border: 0; border-radius: 4px; backgrou
 .pager [aria-current] { font-weight: 700; }
 .price { font-size: 1.5rem; font-weight: 700; margin: 0.25rem 0; }
 .gallery { display: flex; gap: 0.5rem; overflow-x: auto; }
-.gallery img { aspect-ratio: 1; object-fit: contain; max-height: 24rem; width: auto; height: auto; background: #f3f3f3; }
+.gallery img { flex: none; width: min(24rem, 100%); height: auto; aspect-ratio: 1; object-fit: contain; background: #f3f3f3; }
 table { border-collapse: collapse; }
 td, th { border: 1px solid var(--line); padding: 0.25rem 0.6rem; text-align: left; vertical-align: top; }
 footer { color: var(--muted); font-size: 0.875rem; border-top: 1px solid var(--line); margin-top: 2rem; }
