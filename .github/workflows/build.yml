@@ -9,7 +9,6 @@ on:
 
 permissions:
   contents: read
-  actions: write  # keepalive job re-enables this workflow
 
 concurrency:
   group: deploy
@@ -20,6 +19,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 #v7.0.1
+        with:
+          persist-credentials: false
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 #v7.0.0
         with:
           python-version: "3.12"
@@ -28,7 +29,7 @@ jobs:
           path: .cache
           key: items-${{ github.run_id }}
           restore-keys: items-
-      - run: pip install -r requirements.txt
+      - run: pip install --require-hashes -r requirements.txt
       - run: python build.py
         env:
           EBAY_CLIENT_ID: ${{ secrets.EBAY_CLIENT_ID }}
@@ -56,6 +57,8 @@ jobs:
     # GitHub disables schedules in public repos after 60 days without activity; re-enabling resets that clock.
     needs: deploy
     runs-on: ubuntu-latest
+    permissions:
+      actions: write
     steps:
       - run: gh api -X PUT repos/${{ github.repository }}/actions/workflows/build.yml/enable
         env:

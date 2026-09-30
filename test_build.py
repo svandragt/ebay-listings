@@ -78,4 +78,12 @@ assert o1["hasMerchantReturnPolicy"]["returnPolicyCategory"].endswith("MerchantR
 assert o1["hasMerchantReturnPolicy"]["returnFees"].endswith("ReturnShippingFees") and o1["hasMerchantReturnPolicy"]["merchantReturnDays"] == 30
 assert product("110000000001")["gtin"] == "5012345678900"
 assert o2["hasMerchantReturnPolicy"]["returnPolicyCategory"].endswith("MerchantReturnNotPermitted") and "shippingDetails" not in o2
+hdr = (out / "_headers").read_text()
+assert "Content-Security-Policy:" in hdr and "'sha256-" in hdr and "unsafe-inline" not in hdr, hdr
+assert 'style="' not in read("/search/"), "inline style attributes break the CSP"
+try:
+    build.legacy_id("../../etc")
+    raise AssertionError("legacy_id accepted a path")
+except ValueError:
+    pass
 print("ok")

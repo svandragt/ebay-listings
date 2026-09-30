@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Fetch eBay listings (or load a fixture) and render the static site into _site/."""
-import argparse, base64, gzip, html, json, os, re, shutil, sys, time, tomllib, unicodedata
+import argparse, base64, gzip, hashlib, html, json, os, re, shutil, sys, time, tomllib, unicodedata
 import urllib.error, urllib.parse, urllib.request
 from datetime import datetime, timedelta, timezone
 from html.parser import HTMLParser
@@ -32,6 +32,13 @@ NO_BRAND = {"unbranded", "does not apply", "n/a"}
 C = {}  # site config, filled by load_config()
 STYLE = Markup((ROOT / "static" / "style.css").read_text())
 env = Environment(loader=FileSystemLoader(ROOT / "templates"), autoescape=select_autoescape(["html"]))
+
+
+def legacy_id(item_id):
+    """eBay item ids end up in file paths, so refuse anything that isn't plain digits."""
+    if not item_id.isdigit():
+        raise ValueError(f"unexpected eBay item id {item_id!r}")
+    return item_id
 
 
 def load_config(path):
@@ -156,13 +163,13 @@ def fetch_live():
     # ponytail: description and aspects only refresh on a cache miss, so edits made on eBay show up late.
     # Upgrade path: compare itemEndDate/lastModified against the cached copy if that becomes a problem.
     CACHE.mkdir(parents=True, exist_ok=True)
-    listed = {item_id.split("|")[1] for item_id in summaries}
+    listed = {legacy_id(item_id.split("|")[1]) for item_id in summaries}
     for f in CACHE.glob("*.json"):
         if f.stem not in listed:
             f.unlink()
     items = []
     for item_id, s in summaries.items():
-        f = CACHE / f"{item_id.split('|')[1]}.json"
+        f = CACHE / f"{legacy_id(item_id.split('|')[1])}.json"
         if f.exists():
             detail = json.loads(f.read_text())
         else:
@@ -179,7 +186,7 @@ def fetch_live():
 
 def prepare(raw):
     """Turn a getItem response into the flat dict the templates use."""
-    item_id = raw["legacyItemId"]
+    item_id = legacy_id(raw["legacyItemId"])
     aspects = {a["name"]: a["value"] for a in raw.get("localizedAspects", [])}
     brand = aspects.get("Brand")
     if brand and brand.lower() in NO_BRAND:
@@ -327,6 +334,20 @@ def item_page(out, i):
          description=f"{i['title']} - {i['price_text']}{', ' + i['condition'] if i['condition'] else ''}. Sold by {i['seller']} on eBay."[:160])
 
 
+def headers():
+    """Cloudflare Pages _headers. The CSP allows the inlined stylesheet by hash, so style-src needs no 'unsafe-inline'."""
+    style_hash = base64.b64encode(hashlib.sha256(str(STYLE).encode()).digest()).decode()
+    csp = ("default-src 'self'; img-src 'self' data: https://i.ebayimg.com; "
+           f"style-src 'sha256-{style_hash}'; script-src 'self'; connect-src 'self'; "
+           "object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'")
+    return ("/*\n"
+            f"  Content-Security-Policy: {csp}\n"
+            "  Strict-Transport-Security: max-age=31536000\n"
+            "  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()\n"
+            "  Referrer-Policy: strict-origin-when-cross-origin\n"
+            "  X-Content-Type-Options: nosniff\n")
+
+
 def group(items, key, name):
     groups = {}
     for i in items:
@@ -375,6 +396,7 @@ def build(items, out):
           + "".join(f'<entry><title>{xml_escape(i["title"])}</title><id>{C["site_url"]}{i["url"]}</id><updated>{i["created"]}</updated>'
                     f'<link href="{C["site_url"]}{i["url"]}"/><summary>{xml_escape(i["text"][:300] or i["title"])}</summary></entry>\n'
                     for i in items[:30]) + "</feed>\n")
+    write(out, "/_headers", headers())
     write(out, "/robots.txt", f"User-agent: *\nAllow: /\n\nSitemap: {C['site_url']}/sitemap.xml\n")
     shutil.copytree(ROOT / "static", out / "static", ignore=shutil.ignore_patterns("style.css"))
 

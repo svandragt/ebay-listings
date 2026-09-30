@@ -29,3 +29,4 @@ table { border-collapse: collapse; }
 td, th { border: 1px solid var(--line); padding: 0.25rem 0.6rem; text-align: left; vertical-align: top; }
 footer { color: var(--muted); font-size: 0.875rem; border-top: 1px solid var(--line); margin-top: 2rem; }
 @media (min-width: 40rem) { h1 { font-size: 2rem; } }
+#results { min-height: 100vh; }
