@@ -1,0 +1,5 @@
+# Used by test_build.py and `python build.py --config fixtures/site.toml --fixture fixtures/items.json`.
+sellers = ["example-seller-a", "example-seller-b"]
+site_url = "https://listings.example.com"
+site_name = "Example listings"
+marketplace = "EBAY_GB"

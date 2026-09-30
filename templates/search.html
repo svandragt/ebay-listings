@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Search</h1>
+<div id="results" aria-live="polite"><p>Use the search box above. To search each shop on eBay instead, use these links.</p></div>
+<ul>
+{% for s in site.sellers %}<li><a class="ebay-search" href="https://{{ site.domain }}/sch/i.html?_ssn={{ s | urlencode }}&amp;_nkw=">Search {{ s }} on eBay</a></li>
+{% endfor %}
+</ul>
+{% endblock %}

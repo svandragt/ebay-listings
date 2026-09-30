@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ title }}</title>
+<meta name="description" content="{{ description }}">
+{% if robots %}<meta name="robots" content="{{ robots }}">{% endif %}
+{% if canonical %}<link rel="canonical" href="{{ canonical }}">{% endif %}
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="{{ site.site_name }}">
+<meta property="og:title" content="{{ title }}">
+<meta property="og:description" content="{{ description }}">
+{% if canonical %}<meta property="og:url" content="{{ canonical }}">{% endif %}
+{% if og_image %}<meta property="og:image" content="{{ og_image }}">{% endif %}
+<meta name="twitter:card" content="{{ 'summary_large_image' if og_image else 'summary' }}">
+<meta name="twitter:title" content="{{ title }}">
+<meta name="twitter:description" content="{{ description }}">
+<link rel="alternate" type="application/atom+xml" href="/feed.xml" title="{{ site.site_name }}">
+<link rel="stylesheet" href="/static/style.css">
+{% for j in jsonld %}<script type="application/ld+json">{{ ld(j) }}</script>
+{% endfor %}
+</head>
+<body>
+<header>
+<a class="site" href="/">{{ site.site_name }}</a>
+<nav>
+<a href="/new/">New</a>
+{% for s in site.sellers %}<a href="/seller/{{ s }}/">{{ s }}</a>{% endfor %}
+</nav>
+<form action="/search/" method="get" role="search">
+<input type="search" name="q" placeholder="Search listings" aria-label="Search listings">
+<button type="submit">Search</button>
+</form>
+</header>
+<main>
+{% if crumbs %}<nav class="crumbs" aria-label="Breadcrumb">
+{% for name, url in crumbs %}{% if loop.last %}<span aria-current="page">{{ name }}</span>{% else %}<a href="{{ url }}">{{ name }}</a>{% endif %}{% endfor %}
+</nav>{% endif %}
+{% block content %}{% endblock %}
+</main>
+<footer>
+<p>Listings are sold on eBay. Prices and stock are refreshed nightly. <a href="/feed.xml">Atom feed</a></p>
+</footer>
+<script src="/static/search.js" defer></script>
+</body>
+</html>

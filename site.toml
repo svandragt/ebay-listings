@@ -1,0 +1,6 @@
+sellers = ["hermyhermy", "ama-6888"]
+site_url = "https://listings.vandragt.com"
+site_name = "listings.vandragt.com"
+marketplace = "EBAY_GB"
+# Optional. By default build.py searches every top-level category from eBay's Taxonomy API.
+# top_category_ids = [1, 267, 220]

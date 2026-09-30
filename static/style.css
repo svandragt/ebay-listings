@@ -1,0 +1,31 @@
+:root { --fg: #1c1c1c; --muted: #666; --line: #ddd; --accent: #0b5bd3; --bg: #fff; }
+* { box-sizing: border-box; }
+body { margin: 0; font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: var(--fg); background: var(--bg); }
+a { color: var(--accent); }
+img { max-width: 100%; height: auto; }
+header, main, footer { max-width: 60rem; margin: 0 auto; padding: 0.75rem 1rem; }
+header { display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; align-items: center; border-bottom: 1px solid var(--line); }
+header .site { font-weight: 700; text-decoration: none; color: var(--fg); }
+header nav { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+header form { margin-left: auto; display: flex; gap: 0.25rem; }
+input[name="q"] { padding: 0.35rem 0.5rem; border: 1px solid var(--line); border-radius: 4px; font: inherit; }
+button, .buy { padding: 0.35rem 0.75rem; border: 0; border-radius: 4px; background: var(--accent); color: #fff; font: inherit; text-decoration: none; cursor: pointer; }
+.buy { display: inline-block; padding: 0.6rem 1.2rem; font-weight: 600; }
+.crumbs { font-size: 0.875rem; color: var(--muted); padding: 0; }
+.crumbs a + a::before, .crumbs a + span::before { content: " / "; }
+.grid { list-style: none; margin: 1rem 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr)); gap: 1rem; }
+.grid a { display: block; color: inherit; text-decoration: none; }
+.grid img { width: 100%; aspect-ratio: 1; object-fit: cover; background: #f3f3f3; }
+.grid h3 { margin: 0.25rem 0 0; font-size: 0.9rem; font-weight: 500; }
+.grid p { margin: 0; font-weight: 700; }
+.tags { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.tags a { display: inline-block; padding: 0.15rem 0.6rem; border: 1px solid var(--line); border-radius: 1rem; text-decoration: none; font-size: 0.9rem; }
+.pager { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.pager [aria-current] { font-weight: 700; }
+.price { font-size: 1.5rem; font-weight: 700; margin: 0.25rem 0; }
+.gallery { display: flex; gap: 0.5rem; overflow-x: auto; }
+.gallery img { max-height: 24rem; width: auto; }
+table { border-collapse: collapse; }
+td, th { border: 1px solid var(--line); padding: 0.25rem 0.6rem; text-align: left; vertical-align: top; }
+footer { color: var(--muted); font-size: 0.875rem; border-top: 1px solid var(--line); margin-top: 2rem; }
+@media (min-width: 40rem) { h1 { font-size: 2rem; } }

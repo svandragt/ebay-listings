@@ -1,0 +1,41 @@
+// Progressive enhancement: /search/ works without JS (links to eBay); this adds local results.
+(function () {
+  var q = new URLSearchParams(location.search).get("q") || "";
+  var box = document.querySelector('input[name="q"]');
+  if (box) box.value = q;
+  var out = document.getElementById("results");
+  if (!out) return;
+  document.querySelectorAll("a.ebay-search").forEach(function (a) {
+    a.href += encodeURIComponent(q);
+  });
+  var words = q.toLowerCase().split(/\s+/).filter(Boolean);
+  if (!words.length) return;
+  fetch("/search.json").then(function (r) { return r.json(); }).then(function (items) {
+    var hits = items.filter(function (i) {
+      var text = (i.title + " " + i.category).toLowerCase();
+      return words.every(function (w) { return text.indexOf(w) !== -1; });
+    });
+    var p = document.createElement("p");
+    p.textContent = hits.length + (hits.length === 1 ? " result" : " results") + " for “" + q + "”";
+    var ul = document.createElement("ul");
+    ul.className = "grid";
+    hits.slice(0, 96).forEach(function (i) {
+      var li = document.createElement("li");
+      var a = document.createElement("a");
+      a.href = i.url;
+      if (i.image) {
+        var img = document.createElement("img");
+        img.src = i.image; img.alt = i.title; img.loading = "lazy"; img.width = img.height = 500;
+        a.appendChild(img);
+      }
+      var h = document.createElement("h3");
+      h.textContent = i.title;
+      var pr = document.createElement("p");
+      pr.textContent = i.price;
+      a.append(h, pr);
+      li.appendChild(a);
+      ul.appendChild(li);
+    });
+    out.replaceChildren(p, ul);
+  });
+})();

@@ -1,0 +1,374 @@
+[
+  {
+    "itemId": "v1|110000000001|0",
+    "legacyItemId": "110000000001",
+    "title": "Denby Greenwheat Teapot & Lid, 1.2L",
+    "price": {
+      "value": "24.99",
+      "currency": "GBP"
+    },
+    "condition": "Used",
+    "categoryPath": "Pottery, Porcelain & Glass|Pottery|Denby",
+    "categoryId": "13639",
+    "image": {
+      "imageUrl": "https://i.ebayimg.com/images/g/fake1/s-l1600.jpg"
+    },
+    "additionalImages": [
+      {
+        "imageUrl": "https://i.ebayimg.com/images/g/fake1x0/s-l1600.jpg"
+      },
+      {
+        "imageUrl": "https://i.ebayimg.com/images/g/fake1x1/s-l1600.jpg"
+      }
+    ],
+    "localizedAspects": [
+      {
+        "name": "Condition",
+        "value": "Used"
+      },
+      {
+        "name": "Brand",
+        "value": "Denby"
+      },
+      {
+        "name": "Colour",
+        "value": "Green"
+      },
+      {
+        "name": "Country of Origin",
+        "value": "United Kingdom"
+      }
+    ],
+    "description": "<p>Classic <b>Greenwheat</b> teapot. No chips or cracks.</p><ul><li>Height 16cm</li><li>Holds 1.2 litres</li></ul>",
+    "itemWebUrl": "https://www.ebay.co.uk/itm/110000000001?hash=item1a2b3c&_trkparms=ispr%3D1&amp_trk=fake&mkcid=1&mkevt=1",
+    "seller": {
+      "username": "example-seller-a"
+    },
+    "itemCreationDate": "2026-09-28T10:15:00.000Z",
+    "estimatedAvailabilities": [
+      {
+        "estimatedAvailabilityStatus": "IN_STOCK",
+        "estimatedAvailableQuantity": 1
+      }
+    ]
+  },
+  {
+    "itemId": "v1|110000000002|0",
+    "legacyItemId": "110000000002",
+    "title": "Denby Greenwheat Milk Jug",
+    "price": {
+      "value": "9.50",
+      "currency": "GBP"
+    },
+    "condition": "Used",
+    "categoryPath": "Pottery, Porcelain & Glass|Pottery|Denby",
+    "categoryId": "13639",
+    "image": {
+      "imageUrl": "https://i.ebayimg.com/images/g/fake2/s-l1600.jpg"
+    },
+    "additionalImages": [
+      {
+        "imageUrl": "https://i.ebayimg.com/images/g/fake2x0/s-l1600.jpg"
+      },
+      {
+        "imageUrl": "https://i.ebayimg.com/images/g/fake2x1/s-l1600.jpg"
+      }
+    ],
+    "localizedAspects": [
+      {
+        "name": "Condition",
+        "value": "Used"
+      },
+      {
+        "name": "Brand",
+        "value": "Denby"
+      }
+    ],
+    "description": "<p>Matching milk jug, light use only.</p>",
+    "itemWebUrl": "https://www.ebay.co.uk/itm/110000000002?hash=item1a2b3c&_trkparms=ispr%3D1&amp_trk=fake&mkcid=1&mkevt=1",
+    "seller": {
+      "username": "example-seller-a"
+    },
+    "itemCreationDate": "2026-09-27T09:00:00.000Z",
+    "estimatedAvailabilities": [
+      {
+        "estimatedAvailabilityStatus": "IN_STOCK",
+        "estimatedAvailableQuantity": 1
+      }
+    ]
+  },
+  {
+    "itemId": "v1|110000000003|0",
+    "legacyItemId": "110000000003",
+    "title": "Denby Greenwheat Dinner Plates, Set of 4",
+    "price": {
+      "value": "32.00",
+      "currency": "GBP"
+    },
+    "condition": "Used",
+    "categoryPath": "Pottery, Porcelain & Glass|Pottery|Denby",
+    "categoryId": "13639",
+    "image": {
+      "imageUrl": "https://i.ebayimg.com/images/g/fake3/s-l1600.jpg"
+    },
+    "additionalImages": [
+      {
+        "imageUrl": "https://i.ebayimg.com/images/g/fake3x0/s-l1600.jpg"
+      },
+      {
+        "imageUrl": "https://i.ebayimg.com/images/g/fake3x1/s-l1600.jpg"
+      }
+    ],
+    "localizedAspects": [
+      {
+        "name": "Condition",
+        "value": "Used"
+      },
+      {
+        "name": "Brand",
+        "value": "Denby"
+      }
+    ],
+    "description": "<p>Four 26cm dinner plates.</p><table><tr><th>Diameter</th><td>26cm</td></tr></table>",
+    "itemWebUrl": "https://www.ebay.co.uk/itm/110000000003?hash=item1a2b3c&_trkparms=ispr%3D1&amp_trk=fake&mkcid=1&mkevt=1",
+    "seller": {
+      "username": "example-seller-a"
+    },
+    "itemCreationDate": "2026-09-20T14:30:00.000Z",
+    "estimatedAvailabilities": [
+      {
+        "estimatedAvailabilityStatus": "IN_STOCK",
+        "estimatedAvailableQuantity": 1
+      }
+    ]
+  },
+  {
+    "itemId": "v1|110000000004|0",
+    "legacyItemId": "110000000004",
+    "title": "Casio F-91W Digital Watch, Black Resin Strap",
+    "price": {
+      "value": "14.99",
+      "currency": "GBP"
+    },
+    "condition": "New",
+    "categoryPath": "Jewellery & Watches|Watches, Parts & Accessories|Wristwatches",
+    "categoryId": "31387",
+    "image": {
+      "imageUrl": "https://i.ebayimg.com/images/g/fake4/s-l1600.jpg"
+    },
+    "additionalImages": [
+      {
+        "imageUrl": "https://i.ebayimg.com/images/g/fake4x0/s-l1600.jpg"
+      },
+      {
+        "imageUrl": "https://i.ebayimg.com/images/g/fake4x1/s-l1600.jpg"
+      }
+    ],
+    "localizedAspects": [
+      {
+        "name": "Condition",
+        "value": "New"
+      },
+      {
+        "name": "Brand",
+        "value": "Casio"
+      },
+      {
+        "name": "Movement",
+        "value": "Quartz"
+      }
+    ],
+    "description": "<p>Brand new Casio F-91W. Alarm, stopwatch and daily chime.</p>",
+    "itemWebUrl": "https://www.ebay.co.uk/itm/110000000004?hash=item1a2b3c&_trkparms=ispr%3D1&amp_trk=fake&mkcid=1&mkevt=1",
+    "seller": {
+      "username": "example-seller-a"
+    },
+    "itemCreationDate": "2026-09-29T16:45:00.000Z",
+    "estimatedAvailabilities": [
+      {
+        "estimatedAvailabilityStatus": "IN_STOCK",
+        "estimatedAvailableQuantity": 1
+      }
+    ]
+  },
+  {
+    "itemId": "v1|110000000005|0",
+    "legacyItemId": "110000000005",
+    "title": "Le Creuset 24cm Cast Iron Casserole, Volcanic Orange",
+    "price": {
+      "value": "85.00",
+      "currency": "GBP"
+    },
+    "condition": "Pre-owned",
+    "categoryPath": "Home, Furniture & DIY|Cookware, Dining & Bar|Cookware",
+    "categoryId": "20625",
+    "image": {
+      "imageUrl": "https://i.ebayimg.com/images/g/fake5/s-l1600.jpg"
+    },
+    "additionalImages": [
+      {
+        "imageUrl": "https://i.ebayimg.com/images/g/fake5x0/s-l1600.jpg"
+      },
+      {
+        "imageUrl": "https://i.ebayimg.com/images/g/fake5x1/s-l1600.jpg"
+      }
+    ],
+    "localizedAspects": [
+      {
+        "name": "Condition",
+        "value": "Pre-owned"
+      },
+      {
+        "name": "Brand",
+        "value": "Le Creuset"
+      }
+    ],
+    "description": "<p>Well-loved casserole.</p><script>alert('xss')</script><p onclick=\"steal()\">Dishwasher safe <a href=\"javascript:evil()\">click</a></p><style>body{display:none}</style>",
+    "itemWebUrl": "https://www.ebay.co.uk/itm/110000000005?hash=item1a2b3c&_trkparms=ispr%3D1&amp_trk=fake&mkcid=1&mkevt=1",
+    "seller": {
+      "username": "example-seller-a"
+    },
+    "itemCreationDate": "2026-09-15T08:20:00.000Z",
+    "estimatedAvailabilities": [
+      {
+        "estimatedAvailabilityStatus": "IN_STOCK",
+        "estimatedAvailableQuantity": 1
+      }
+    ]
+  },
+  {
+    "itemId": "v1|110000000006|0",
+    "legacyItemId": "110000000006",
+    "title": "Casio Vintage A168WA-1 Digital Watch",
+    "price": {
+      "value": "29.99",
+      "currency": "GBP"
+    },
+    "condition": "New",
+    "categoryPath": "Jewellery & Watches|Watches, Parts & Accessories|Wristwatches",
+    "categoryId": "31387",
+    "image": {
+      "imageUrl": "https://i.ebayimg.com/images/g/fake6/s-l1600.jpg"
+    },
+    "additionalImages": [
+      {
+        "imageUrl": "https://i.ebayimg.com/images/g/fake6x0/s-l1600.jpg"
+      },
+      {
+        "imageUrl": "https://i.ebayimg.com/images/g/fake6x1/s-l1600.jpg"
+      }
+    ],
+    "localizedAspects": [
+      {
+        "name": "Condition",
+        "value": "New"
+      },
+      {
+        "name": "Brand",
+        "value": "Casio"
+      }
+    ],
+    "description": "<p>Steel case, illuminator, alarm.</p>",
+    "itemWebUrl": "https://www.ebay.co.uk/itm/110000000006?hash=item1a2b3c&_trkparms=ispr%3D1&amp_trk=fake&mkcid=1&mkevt=1",
+    "seller": {
+      "username": "example-seller-b"
+    },
+    "itemCreationDate": "2026-09-29T11:00:00.000Z",
+    "estimatedAvailabilities": [
+      {
+        "estimatedAvailabilityStatus": "IN_STOCK",
+        "estimatedAvailableQuantity": 1
+      }
+    ]
+  },
+  {
+    "itemId": "v1|110000000007|0",
+    "legacyItemId": "110000000007",
+    "title": "Casio Databank CA-53W Calculator Watch",
+    "price": {
+      "value": "39.99",
+      "currency": "GBP"
+    },
+    "condition": "Used",
+    "categoryPath": "Jewellery & Watches|Watches, Parts & Accessories|Wristwatches",
+    "categoryId": "31387",
+    "image": {
+      "imageUrl": "https://i.ebayimg.com/images/g/fake7/s-l1600.jpg"
+    },
+    "additionalImages": [
+      {
+        "imageUrl": "https://i.ebayimg.com/images/g/fake7x0/s-l1600.jpg"
+      },
+      {
+        "imageUrl": "https://i.ebayimg.com/images/g/fake7x1/s-l1600.jpg"
+      }
+    ],
+    "localizedAspects": [
+      {
+        "name": "Condition",
+        "value": "Used"
+      },
+      {
+        "name": "Brand",
+        "value": "Casio"
+      }
+    ],
+    "description": "<p>Retro calculator watch, working, new battery.</p>",
+    "itemWebUrl": "https://www.ebay.co.uk/itm/110000000007?hash=item1a2b3c&_trkparms=ispr%3D1&amp_trk=fake&mkcid=1&mkevt=1",
+    "seller": {
+      "username": "example-seller-b"
+    },
+    "itemCreationDate": "2026-09-26T12:10:00.000Z",
+    "estimatedAvailabilities": [
+      {
+        "estimatedAvailabilityStatus": "IN_STOCK",
+        "estimatedAvailableQuantity": 1
+      }
+    ]
+  },
+  {
+    "itemId": "v1|110000000008|0",
+    "legacyItemId": "110000000008",
+    "title": "LEGO Star Wars 75342 Republic Fighter Tank, Sealed",
+    "price": {
+      "value": "54.95",
+      "currency": "GBP"
+    },
+    "condition": "New",
+    "categoryPath": "Toys & Games|Construction Toys & Kits|Building Toys",
+    "categoryId": "183446",
+    "image": {
+      "imageUrl": "https://i.ebayimg.com/images/g/fake8/s-l1600.jpg"
+    },
+    "additionalImages": [
+      {
+        "imageUrl": "https://i.ebayimg.com/images/g/fake8x0/s-l1600.jpg"
+      },
+      {
+        "imageUrl": "https://i.ebayimg.com/images/g/fake8x1/s-l1600.jpg"
+      }
+    ],
+    "localizedAspects": [
+      {
+        "name": "Condition",
+        "value": "New"
+      },
+      {
+        "name": "Brand",
+        "value": "LEGO"
+      }
+    ],
+    "description": "<p>Factory sealed box.</p>",
+    "itemWebUrl": "https://www.ebay.co.uk/itm/110000000008?hash=item1a2b3c&_trkparms=ispr%3D1&amp_trk=fake&mkcid=1&mkevt=1",
+    "seller": {
+      "username": "example-seller-b"
+    },
+    "itemCreationDate": "2026-09-25T18:00:00.000Z",
+    "estimatedAvailabilities": [
+      {
+        "estimatedAvailabilityStatus": "IN_STOCK",
+        "estimatedAvailableQuantity": 1
+      }
+    ]
+  }
+]
