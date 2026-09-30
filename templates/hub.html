@@ -1,8 +1,8 @@
 {% extends "base.html" %}
-{% macro card(i) %}
+{% macro card(i, n, h) %}
 <li><a href="{{ i.url }}">
-{% if i.image %}<img src="{{ i.thumb }}" alt="{{ i.title }}" width="500" height="500" loading="lazy">{% endif %}
-<h3>{{ i.title }}</h3>
+{% if i.image %}<img src="{{ i.thumb }}" srcset="{{ i.thumb_srcset }}" sizes="(max-width: 40rem) 50vw, 11rem" alt="{{ i.title }}" width="500" height="500" loading="{{ 'eager' if n < 4 else 'lazy' }}"{% if n == 0 %} fetchpriority="high"{% endif %}>{% endif %}
+<{{ h }}>{{ i.title }}</{{ h }}>
 <p>{{ i.price_text }}</p>
 </a></li>
 {% endmacro %}
@@ -15,7 +15,7 @@
 {% endif %}{% endfor %}
 {% if items %}
 {% if link_groups %}<h2>Newest listings</h2>{% endif %}
-<ul class="grid">{% for i in items %}{{ card(i) }}{% endfor %}</ul>
+<ul class="grid">{% for i in items %}{{ card(i, loop.index0, "h3" if link_groups else "h2") }}{% endfor %}</ul>
 {% else %}<p>No listings right now.</p>{% endif %}
 {% if pager %}<nav class="pager" aria-label="Pages">
 {% for n, url in pager %}{% if n == current %}<span aria-current="page">{{ n }}</span>{% else %}<a href="{{ url }}">{{ n }}</a>{% endif %}{% endfor %}

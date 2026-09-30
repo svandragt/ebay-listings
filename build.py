@@ -30,6 +30,7 @@ DROP_TAGS = {"script", "style"}  # content dropped too, not just the tags
 NO_BRAND = {"unbranded", "does not apply", "n/a"}
 
 C = {}  # site config, filled by load_config()
+STYLE = Markup((ROOT / "static" / "style.css").read_text())
 env = Environment(loader=FileSystemLoader(ROOT / "templates"), autoescape=select_autoescape(["html"]))
 
 
@@ -92,6 +93,10 @@ def img(url, width):
     if t := C.get("image_transform"):
         return t.format(width=width) + url
     return re.sub(r"s-l\d+\.\w+", f"s-l{width}.webp", url)  # eBay serves sized variants by URL
+
+
+def srcset(url, widths):
+    return ", ".join(f"{img(url, w)} {w}w" for w in widths)
 
 
 def money(value, currency):
@@ -199,7 +204,8 @@ def prepare(raw):
         "seller": raw["seller"]["username"],
         "images": images, "image": images[0] if images else "",
         "thumb": img(images[0], 500) if images else "",
-        "gallery": [img(u, 1600) for u in images],
+        "thumb_srcset": srcset(images[0], (300, 500)) if images else "",
+        "gallery": [{"src": img(u, 1600), "srcset": srcset(u, (500, 960, 1600))} for u in images],
         "specs": [(n, v) for n, v in aspects.items()],
         "desc": Markup(desc),
         "text": re.sub(r"\s+", " ", html.unescape(re.sub(r"<[^>]+>", " ", desc))).strip(),
@@ -294,6 +300,7 @@ def group(items, key, name):
 
 
 def build(items, out):
+    env.globals["style"] = STYLE
     env.globals["built"] = datetime.now(timezone.utc)
     # Set by GitHub Actions, so each fork links to its own repo without extra config.
     if repo := os.environ.get("GITHUB_REPOSITORY"):
@@ -322,7 +329,7 @@ def build(items, out):
     page(out, "/search/", "search.html", title=f"Search | {C['site_name']}", description="Search listings.", robots="noindex,follow", crumbs=[])
     page(out, "/404.html", "notfound.html", title=f"Not found | {C['site_name']}", description="Page not found.", robots="noindex,follow", canonical=None)
     write(out, "/search.json", json.dumps([{"id": i["id"], "title": i["title"], "price": i["price_text"], "url": i["url"],
-                                            "image": i["thumb"], "category": i["cat"]} for i in items]))
+                                            "image": i["thumb"], "srcset": i["thumb_srcset"], "category": i["cat"]} for i in items]))
     write(out, "/sitemap.xml", '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
           + "".join(f"<url><loc>{xml_escape(u)}</loc><lastmod>{d}</lastmod></url>\n" for u, d in sitemap) + "</urlset>\n")
     updated = items[0]["created"] if items else ""
@@ -333,7 +340,7 @@ def build(items, out):
                     f'<link href="{C["site_url"]}{i["url"]}"/><summary>{xml_escape(i["text"][:300] or i["title"])}</summary></entry>\n'
                     for i in items[:30]) + "</feed>\n")
     write(out, "/robots.txt", f"User-agent: *\nAllow: /\n\nSitemap: {C['site_url']}/sitemap.xml\n")
-    shutil.copytree(ROOT / "static", out / "static")
+    shutil.copytree(ROOT / "static", out / "static", ignore=shutil.ignore_patterns("style.css"))
 
 
 def main():

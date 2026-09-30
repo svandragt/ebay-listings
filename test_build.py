@@ -54,7 +54,9 @@ assert "onclick" not in bad and "javascript:" not in bad and "Dishwasher safe" i
 crafted = build.ld({"name": "</script><script>alert(1)</script><!--"})
 assert "</" not in crafted and "<!--" not in crafted and json.loads(crafted)["name"].startswith("</script>")
 
-for f in ("feed.xml", "robots.txt", "404.html", "search.json", "static/style.css"):
+for f in ("feed.xml", "robots.txt", "404.html", "search.json"):
     assert (out / f).exists(), f
 assert not (out / "CNAME").exists()
+assert re.search(r'<ul class="grid">.*?<img [^>]*srcset="[^"]+ 300w, [^"]+ 500w"', read("/"), re.S)
+assert "<style>:root" in read("/") and 'rel="stylesheet"' not in read("/")
 print("ok")

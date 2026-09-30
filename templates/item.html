@@ -5,7 +5,7 @@
 <p class="price">{{ item.price_text }}{% if item.condition %} <small>{{ item.condition }}</small>{% endif %}</p>
 <p>Sold by <a href="/seller/{{ item.seller }}/">{{ item.seller }}</a>{% if item.brand %} &middot; Brand: <a href="/brand/{{ item.brand_slug }}/">{{ item.brand }}</a>{% endif %}</p>
 {% if item.images %}<div class="gallery">
-{% for img in item.gallery %}<img src="{{ img }}" alt="{{ item.title }}" loading="{{ 'eager' if loop.first else 'lazy' }}">{% endfor %}
+{% for img in item.gallery %}<img src="{{ img.src }}" srcset="{{ img.srcset }}" sizes="(max-width: 26rem) 100vw, 24rem" alt="{{ item.title }}" width="800" height="800"{% if loop.first %} fetchpriority="high"{% else %} loading="lazy"{% endif %}>{% endfor %}
 </div>{% endif %}
 <p><a class="buy" href="{{ item.ebay_url or item.ebay_canonical }}" target="_blank" rel="noopener">Buy on eBay</a></p>
 {% if item.specs %}<h2>Details</h2>

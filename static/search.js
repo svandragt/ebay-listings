@@ -25,10 +25,10 @@
       a.href = i.url;
       if (i.image) {
         var img = document.createElement("img");
-        img.src = i.image; img.alt = i.title; img.loading = "lazy"; img.width = img.height = 500;
+        img.src = i.image; img.srcset = i.srcset; img.sizes = "(max-width: 40rem) 50vw, 11rem"; img.alt = i.title; img.loading = "lazy"; img.width = img.height = 500;
         a.appendChild(img);
       }
-      var h = document.createElement("h3");
+      var h = document.createElement("h2");
       h.textContent = i.title;
       var pr = document.createElement("p");
       pr.textContent = i.price;
