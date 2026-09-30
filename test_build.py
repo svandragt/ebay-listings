@@ -106,11 +106,4 @@ assert "https://:version.:project.pages.dev/*\n  X-Robots-Tag: noindex" in hdr
 assert read("/brand/p-louise/").count('class="h-product"') == 3
 assert f"{site}/brand/p-louise/" in urls and not (out / "brand" / "plouise").exists()
 assert "noindex" not in read("/brand/p-louise/").split("</head>")[0].split('name="robots"')[-1][:40]
-assert build.short_category("Home, Furniture & DIY|Cookware") == "Home & DIY"
-build.C["tagline"], saved = "{categories} from {shops} shops", build.CACHE.parent / "tagline.json"
-saved.unlink(missing_ok=True)
-fake = [{"raw_category": c} for c in ["Music|CDs"] * 3 + ["Health & Beauty|Make-up"] * 2 + ["Toys & Games|X", "Books, Comics & Magazines|Y"]]
-assert build.weekly_tagline(fake) == "Music, Health & Beauty and Toys & Games from two shops", build.weekly_tagline(fake)
-assert build.weekly_tagline([{"raw_category": "Other"}]) == "Music, Health & Beauty and Toys & Games from two shops", "should reuse this week's text"
-saved.unlink()
 print("ok")

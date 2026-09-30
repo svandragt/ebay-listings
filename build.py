@@ -216,7 +216,7 @@ def prepare(raw):
         "price_text": money(price.get("value", ""), currency),
         "condition": raw.get("condition", ""),
         "condition_id": int(raw.get("conditionId") or 0),
-        "cat": cat, "cat_slug": slugify(cat), "raw_category": raw.get("categoryPath") or "Other",
+        "cat": cat, "cat_slug": slugify(cat),
         "brand": brand, "brand_slug": slugify(brand) if brand else None,
         "seller": raw["seller"]["username"],
         "images": images, "image": images[0] if images else "",
@@ -395,37 +395,6 @@ def group(items, key, name):
     return sorted(((g[0][name], slug, g) for slug, g in groups.items()), key=lambda t: -len(t[2]))
 
 
-NUMBERS = "zero one two three four five six seven eight nine ten".split()
-
-
-def short_category(path):
-    """'Home, Furniture & DIY' -> 'Home & DIY', so a list of three stays readable."""
-    parts = path.split("|")[0].split(", ")
-    return parts[0] if len(parts) == 1 else f"{parts[0]} & {parts[-1].split(' & ')[-1]}"
-
-
-def weekly_tagline(items):
-    """Fill {categories} and {shops} in site.toml's tagline, recomputed once per ISO week so the home title stays stable."""
-    template = C.get("tagline")
-    if not template or "{" not in template:
-        return template
-    week = datetime.now(timezone.utc).strftime("%G-W%V")
-    saved = CACHE.parent / "tagline.json"
-    try:
-        cached = json.loads(saved.read_text())
-        if cached["week"] == week and cached["template"] == template:
-            return cached["text"]
-    except (OSError, ValueError, KeyError):
-        pass
-    top = [c for c, _ in collections.Counter(short_category(i["raw_category"]) for i in items).most_common(3)]
-    cats = top[0] if len(top) == 1 else ", ".join(top[:-1]) + " and " + top[-1]
-    shops = len(C["sellers"])
-    text = template.replace("{categories}", cats).replace("{shops}", NUMBERS[shops] if shops < len(NUMBERS) else str(shops))
-    saved.parent.mkdir(parents=True, exist_ok=True)
-    saved.write_text(json.dumps({"week": week, "template": template, "text": text}))
-    return text
-
-
 def merge_brands(items):
     """'p louise', 'PLouise' and 'P. Louise' are one brand: show the most common spelling."""
     spellings = {}
@@ -453,7 +422,7 @@ def build(items, out):
     cats, brands = group(items, "cat_slug", "cat"), group(items, "brand_slug", "brand")
     groups = [("Categories", [(n, f"/category/{s}/", len(g)) for n, s, g in cats]),
               ("Brands", [(n, f"/brand/{s}/", len(g)) for n, s, g in brands])]
-    tagline = weekly_tagline(items)
+    tagline = C.get("tagline")
     hub(out, sitemap, "/", tagline or "Listings from " + " and ".join(C["sellers"]), items, link_groups=groups)
     for seller in C["sellers"]:
         org = {"@context": "https://schema.org", "@type": "Organization", "name": seller,
