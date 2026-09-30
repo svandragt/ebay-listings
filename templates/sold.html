@@ -2,12 +2,9 @@
 {% from "macros.html" import more_like_this %}
 {% block content %}
 <article>
-<h1>{{ item.title }}</h1>
-{% if item.images %}<div class="gallery">
-{% set g = item.gallery[0] %}<img src="{{ g.src }}" srcset="{{ g.srcset }}" sizes="(max-width: 26rem) 100vw, 24rem" alt="{{ item.title }}" width="800" height="800" loading="lazy">
-</div>{% endif %}
-<p>This item has sold, or the listing has ended.</p>
-<p>See more from <a href="/seller/{{ item.seller }}/">{{ item.seller }}</a>.</p>
+<h1>This listing has ended</h1>
+<p>It has sold or the seller has ended it.{% if related %} Here are similar listings.{% endif %}</p>
+{% if item.seller in site.sellers %}<p>See more from <a href="/seller/{{ item.seller }}/">{{ item.seller }}</a>.</p>{% endif %}
 {{ more_like_this(related) }}
 </article>
 {% endblock %}

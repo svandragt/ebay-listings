@@ -1,55 +1,9 @@
 [
   {
     "ended": "2026-09-29T08:00:00Z",
-    "item": {
-      "itemId": "v1|110000000099|0",
-      "legacyItemId": "110000000099",
-      "title": "Casio Vintage Digital Watch, Sold Example",
-      "price": {
-        "value": "14.99",
-        "currency": "GBP"
-      },
-      "condition": "New",
-      "categoryPath": "Jewellery & Watches|Watches, Parts & Accessories|Wristwatches",
-      "categoryId": "31387",
-      "image": {
-        "imageUrl": "https://i.ebayimg.com/images/g/fake4/s-l1600.jpg"
-      },
-      "additionalImages": [
-        {
-          "imageUrl": "https://i.ebayimg.com/images/g/fake4x0/s-l1600.jpg"
-        },
-        {
-          "imageUrl": "https://i.ebayimg.com/images/g/fake4x1/s-l1600.jpg"
-        }
-      ],
-      "localizedAspects": [
-        {
-          "name": "Condition",
-          "value": "New"
-        },
-        {
-          "name": "Brand",
-          "value": "Casio"
-        },
-        {
-          "name": "Movement",
-          "value": "Quartz"
-        }
-      ],
-      "description": "<p>Brand new Casio F-91W. Alarm, stopwatch and daily chime.</p>",
-      "itemWebUrl": "https://www.ebay.co.uk/itm/110000000004?hash=item1a2b3c&_trkparms=ispr%3D1&amp_trk=fake&mkcid=1&mkevt=1",
-      "seller": {
-        "username": "example-seller-a"
-      },
-      "itemCreationDate": "2026-09-29T16:45:00.000Z",
-      "estimatedAvailabilities": [
-        {
-          "estimatedAvailabilityStatus": "IN_STOCK",
-          "estimatedAvailableQuantity": 1
-        }
-      ],
-      "conditionId": "1000"
-    }
+    "id": "110000000099",
+    "url": "/item/110000000099-casio-vintage-digital-watch-sold-example/",
+    "seller": "example-seller-a",
+    "cat_slug": "wristwatches"
   }
 ]

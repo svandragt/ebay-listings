@@ -24,7 +24,7 @@ def jsonld(html):
 
 item_dirs = sorted(p.name for p in (out / "item").iterdir())
 assert len(item_dirs) == len(items) + 1  # live items plus the sold page
-sold_url = build.prepare(sold[0]["item"])["url"]
+sold_url = sold[0]["url"]
 assert all(re.fullmatch(r"\d+-[a-z0-9]+(-[a-z0-9]+)*", d) for d in item_dirs), item_dirs
 
 for d in item_dirs:
@@ -49,6 +49,8 @@ assert '<meta name="robots" content="noindex,follow">' not in read("/brand/casio
 assert f"{site}/brand/lego/" not in urls and f"{site}/brand/casio/" in urls
 assert 'name="robots" content="noindex' in read("/search/")
 assert "<p>Example-seller-a" not in read("/seller/example-seller-a/") and "Every listing links straight to the eBay page" in read("/seller/example-seller-a/")
+assert re.search(r'<section class="intro"><p>example-seller-a sells.*Every listing links straight to the eBay page.*?</section>', read("/seller/example-seller-a/"), re.S)
+assert 'class="intro"' not in read("/seller/example-seller-b/") and "listings from 1 seller, updated every 6 hours" in read("/seller/example-seller-b/")
 
 # untrusted description: no script, style, attributes or javascript: links survive
 bad = read("/item/" + next(d for d in item_dirs if d.startswith("110000000005")))
@@ -126,37 +128,39 @@ for d in item_dirs:
 watch = read("/item/" + next(d for d in item_dirs if d.startswith("110000000004"))).split("<h2>More like this</h2>")[1]
 assert "110000000006" in watch and "110000000007" in watch and "110000000001" not in watch  # other watches yes, the same seller's teapot no
 
-# sold page
+# sold page: no eBay content, only the ended notice
 sp = read(sold_url)
-assert 'name="robots" content="noindex,follow"' in sp and 'rel="canonical"' not in sp
+assert 'name="robots" content="noindex,follow"' in sp and 'rel="canonical"' not in sp and 'og:image' not in sp and "<img" not in sp.split("<main>")[1].split("More like this")[0]
 assert {j["@type"] for j in jsonld(sp)} == {"BreadcrumbList"} and '"Product"' not in sp
-assert "<h1>Casio Vintage Digital Watch, Sold Example</h1>" in sp and "has sold, or the listing has ended" in sp
-assert '<a href="/seller/example-seller-a/">' in sp and "<h2>More like this</h2>" in sp and 'loading="lazy"' in sp
+assert jsonld(sp)[0]["itemListElement"][-1]["name"] == "Listing ended"
+assert f"<title>Listing ended | {build.C['site_name']}</title>" in sp and '<meta name="description" content="This listing has ended.">' in sp
+assert "<h1>This listing has ended</h1>" in sp and "It has sold or the seller has ended it. Here are similar listings." in sp and "Sold Example" not in sp
+assert '<a href="/seller/example-seller-a/">' in sp and "<h2>More like this</h2>" in sp
 assert sold_url not in "".join(urls) and sold_url not in (out / "feed.xml").read_text() and sold_url not in (out / "search.json").read_text()
 assert sold_url not in read("/") and sold_url not in read("/category/wristwatches/") and sold_url not in read("/seller/example-seller-a/")
 assert read("/category/wristwatches/").count('class="h-product"') == 3  # the sold item is not counted
 assert "Wristwatches (3)" in read("/")
-live_same_id = [{**sold[0], "item": {**sold[0]["item"], "legacyItemId": "110000000004"}}]
-build.build(items, Path(tempfile.mkdtemp()), sold=live_same_id)  # live wins, no sold page, no crash
+sold_out = Path(tempfile.mkdtemp())
+build.build(items, sold_out, sold=[{**sold[0], "seller": "gone", "cat_slug": "no-such-category"}])  # no match: no section; unknown seller: no link
+gone = (sold_out / sold_url.strip("/") / "index.html").read_text()
+assert "More like this" not in gone and "Here are similar" not in gone and "/seller/gone/" not in gone and "It has sold or the seller has ended it." in gone
+build.build(items, Path(tempfile.mkdtemp()), sold=[{**sold[0], "id": "110000000004"}])  # live wins, no sold page, no crash
 
-# price reduced note
-day = timedelta(days=1)
-raw = lambda price: [{"legacyItemId": "1", "price": {"value": price}}]
-h = build.track_prices({}, raw("15.00"), now := datetime(2026, 9, 1, tzinfo=timezone.utc))
-assert h["1"] == {"price": "15.00", "since": "2026-09-01T00:00:00Z"}
-h8 = build.track_prices(h, raw("12.00"), now + 8 * day)
-assert h8["1"]["reduced"] == {"was": "15.00", "on": "2026-09-09T00:00:00Z"} and h8["1"]["since"] == "2026-09-09T00:00:00Z"
-assert "reduced" not in build.track_prices(h, raw("12.00"), now + 3 * day)["1"]
-assert "reduced" not in build.track_prices(h8, raw("14.00"), now + 10 * day)["1"]  # a rise clears it
-assert "reduced" in build.track_prices(h8, raw("12.00"), now + 21 * day)["1"]
-assert "reduced" not in build.track_prices(h8, raw("12.00"), now + 22 * day)["1"]  # expires after 14 days
-assert build.track_prices(h8, raw("12.00") + [{"legacyItemId": "2", "price": {"value": "1"}}], now + 9 * day).keys() == {"1", "2"}
-assert build.track_prices(h8, [], now + 9 * day) == {}  # delisted items are pruned
-pout = Path(tempfile.mkdtemp())
-build.build(items, pout, prices={"110000000001": {"price": "24.99", "since": "x", "reduced": {"was": "30.00", "on": "x"}}})
-assert '<small class="reduced">Price lowered from £30.00</small>' in (pout / "item").glob("110000000001-*/index.html").__next__().read_text()
-assert 'class="reduced"' not in read("/") and "lowered" not in pout.joinpath("index.html").read_text()  # cards stay plain
-assert "lowered" not in "".join(re.findall(r'ld\+json">(.*?)</script>', (pout / "item").glob("110000000001-*/index.html").__next__().read_text(), re.S))
+# privacy page
+pv = read("/privacy/")
+assert f'<link rel="canonical" href="{site}/privacy/">' in pv and 'name="robots" content="noindex,follow"' in pv
+assert "example-seller-a and example-seller-b" in pv and "id=4260" in pv and "cloudflare.com/web-analytics/" in pv and "cloudflare.com/privacypolicy/" in pv
+assert '<a href="/privacy/">Privacy</a>' in read("/") and '<a href="/privacy/">Privacy</a>' in sp
+assert "/privacy/" not in sitemap
+
+# price lowered: only from eBay's own marketingPrice, item page only
+low = read("/item/" + next(d for d in item_dirs if d.startswith("110000000002")))
+assert '<small class="lowered">Price lowered</small>' in low and "12.00" not in low and "Price lowered" not in json.dumps(jsonld(low))
+assert "Price lowered" not in a and "Price lowered" not in low.split("More like this")[-1]
+assert not any("Price lowered" in read(pth) for pth in ("/", "/seller/example-seller-a/", "/brand/denby/"))
+mp = lambda orig, now: {"price": {"value": now}, "marketingPrice": {"originalPrice": {"value": orig}}}
+assert build.is_lowered(mp("12.00", "9.50")) and not build.is_lowered(mp("9.50", "9.50")) and not build.is_lowered(mp("5", "9.50"))
+assert not build.is_lowered({"price": {"value": "9.50"}}) and not build.is_lowered(mp("n/a", "9.50"))
 
 # Cloudflare Web Analytics
 assert "script-src 'self' https://static.cloudflareinsights.com;" in hdr and "connect-src 'self' https://cloudflareinsights.com;" in hdr
@@ -167,19 +171,29 @@ real_cache, build.CACHE = build.CACHE, tmp / "items"
 try:
     build.CACHE.mkdir()
     now = datetime(2026, 9, 30, 12, 0, tzinfo=timezone.utc)
-    (build.CACHE / "1.json").write_text('{"legacyItemId": "1"}')
-    (build.CACHE / "2.json").write_text('{"legacyItemId": "2"}')
+    cached = lambda lid: json.dumps({**items[0], "legacyItemId": lid})
+    (build.CACHE / "1.json").write_text(cached("1"))
+    (build.CACHE / "2.json").write_text(cached("2"))
     got = build.retire_cache({"2"}, now)  # 1 ends
-    assert [w["item"]["legacyItemId"] for w in got] == ["1"] and got[0]["ended"] == "2026-09-30T12:00:00Z"
+    assert [w["id"] for w in got] == ["1"] and got[0]["ended"] == "2026-09-30T12:00:00Z"
+    assert got[0].keys() == {"ended", "id", "url", "seller", "cat_slug"}
     assert not (build.CACHE / "1.json").exists() and (build.CACHE / "2.json").exists()
+    assert "title" not in (tmp / "sold" / "1.json").read_text() and "description" not in (tmp / "sold" / "1.json").read_text()
     got = build.retire_cache({"2"}, now + timedelta(days=5))  # keeps the original ended time
     assert got[0]["ended"] == "2026-09-30T12:00:00Z"
     got = build.retire_cache({"1", "2"}, now + timedelta(days=6))  # relisted
     assert got == [] and not (tmp / "sold" / "1.json").exists()
-    (build.CACHE / "1.json").write_text('{"legacyItemId": "1"}')
+    (build.CACHE / "1.json").write_text(cached("1"))
     build.retire_cache({"2"}, now)
     assert len(build.retire_cache({"2"}, now + timedelta(days=29))) == 1
     assert build.retire_cache({"2"}, now + timedelta(days=31)) == [] and not list((tmp / "sold").glob("*.json"))
+    # an old {"ended", "item"} wrapper is migrated in place and the getItem copy is gone from disk
+    old = tmp / "sold" / "3.json"
+    old.write_text(json.dumps({"ended": "2026-09-29T08:00:00Z", "item": {**items[0], "legacyItemId": "3"}}))
+    got = build.retire_cache({"2"}, now)
+    assert got[0].keys() == {"ended", "id", "url", "seller", "cat_slug"} and got[0]["ended"] == "2026-09-29T08:00:00Z" and got[0]["id"] == "3"
+    rewritten = json.loads(old.read_text())
+    assert rewritten == got[0] and "title" not in old.read_text() and "description" not in old.read_text()
 finally:
     build.CACHE = real_cache
 print("ok")

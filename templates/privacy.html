@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Privacy</h1>
+<p>This site shows listings from the eBay sellers {{ sellers }}. You buy on eBay, under <a href="{{ ebay_privacy }}">eBay's privacy notice</a>.</p>
+<h2>What the site collects</h2>
+<p>The site has no accounts, forms or cookies.</p>
+<p>Visit statistics come from <a href="https://www.cloudflare.com/web-analytics/">Cloudflare Web Analytics</a>. It sets no cookies and doesn't use local storage. It records the pages you visit, the referrer, your country and your device type, in aggregate.</p>
+<p>Cloudflare Pages hosts the site. Like any web host, it processes your IP address to deliver the pages. Read <a href="https://www.cloudflare.com/privacypolicy/">Cloudflare's privacy policy</a>.</p>
+<h2>Search and photos</h2>
+<p>Search runs in your browser against a copy of the listings. Your search terms are part of the page address, so they reach Cloudflare like any other page request. This site doesn't store them or use them for anything else.</p>
+<p>Cloudflare fetches the photos from eBay's image servers, resizes them and serves them from this site.</p>
+<h2>Questions</h2>
+<p>Message the seller through eBay.</p>
+<p>Last updated {{ built.strftime('%-d %B %Y') }}.</p>
+{% endblock %}

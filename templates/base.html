@@ -41,7 +41,7 @@
 {% block content %}{% endblock %}
 </main>
 <footer>
-<p>Listings are sold on eBay. Prices and stock are refreshed every 6 hours. <a href="/feed.xml">Atom feed</a></p>
+<p>Listings are sold on eBay. Prices and stock are refreshed every 6 hours. <a href="/feed.xml">Atom feed</a> &middot; <a href="/privacy/">Privacy</a></p>
 <p>Last updated <time datetime="{{ built.isoformat(timespec='seconds') }}">{{ built.strftime('%-d %B %Y, %H:%M UTC') }}</time>{% if repo_url %} &middot; <a href="{{ repo_url }}">Source on GitHub</a> (GPL-3.0){% endif %}</p>
 </footer>
 <script src="/static/search.js" defer></script>

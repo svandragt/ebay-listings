@@ -19,8 +19,9 @@ All the logic lives in `build.py`: fetch → `prepare()` → render → write `_
 
 - **Config vs code.** Anything site-specific belongs in `site.toml`, because the repo is public and meant to be forked. Tests use fake sellers in `fixtures/site.toml`. Marketplace → eBay domain and currency is the `MARKETPLACES` dict. The GitHub repo link in the footer comes from `GITHUB_REPOSITORY`.
 - **Fetching.** The Browse `item_summary/search` endpoint needs a category, so `top_categories()` reads the marketplace's top-level categories from the Taxonomy API, and each seller is searched per category. `getItem` responses are cached in `.cache/items/{legacyItemId}.json`, and the workflow persists that cache between runs. Price, title and condition are always refreshed from the search summary. The call budget (5,000 a day, shared with another app) is why the cache exists.
-- **Sold pages.** `retire_cache()` moves the cached `getItem` file of an unlisted item to `.cache/sold/{id}.json` as `{"ended", "item"}`, keeps the first `ended`, deletes the file if the item is listed again and purges it after 30 days. `build(items, out, sold)` renders each one at its old URL with `sold.html` (`noindex`, no canonical, BreadcrumbList only). Sold items stay out of hubs, counts, sitemap, `search.json` and the feed. `--sold file.json` does the same in fixture mode.
-- **Price reduced note.** `track_prices()` keeps `.cache/prices.json` (price, `since`, optional `reduced`). A drop only sets `reduced` if the old price stood for 7 days, any change resets `since`, a rise clears `reduced`, and the note expires after 14 days. Item page only, muted text, no JSON-LD change. Fixture mode only tracks with `--prices PATH`.
+- **Sold pages.** `retire_cache()` turns the cached `getItem` file of an unlisted item into `.cache/sold/{id}.json` as `{"ended", "id", "url", "seller", "cat_slug"}` and deletes the file. It keeps the first `ended`, deletes the file if the item is listed again and purges it after 30 days. `sold_stub()` also migrates old `{"ended", "item"}` wrappers in place. `build(items, out, sold)` renders each one at its old URL with `sold.html`: no eBay content, "This listing has ended", "More like this" by category only, `noindex`, no canonical, BreadcrumbList only. Sold items stay out of hubs, counts, sitemap, `search.json` and the feed. `--sold file.json` does the same in fixture mode.
+- **Price lowered.** The item page shows a muted "Price lowered" only when eBay's own `marketingPrice.originalPrice` (a markdown sale) is above the current price, through `is_lowered()`. No old price or percentage, nothing on cards or in JSON-LD. The live run takes `marketingPrice` fresh from the search summary and drops any cached copy.
+- **Privacy page.** `/privacy/` is self-canonical, `noindex,follow`, linked from the footer and left out of the sitemap. Its eBay link comes from `EBAY_PRIVACY`, with the marketplace's `/help` as fallback.
 - **Fail closed.** Any HTTP error, or a seller returning 0 items, exits non-zero so the last good deploy stays live.
 - **Canonical split.** Item pages set their canonical to `https://{domain}/itm/{legacyItemId}` (`ITEM_CANONICAL = "ebay"`) and are left out of the sitemap. Hub pages (home, seller, category, brand, `/new/`) are self-canonical and in the sitemap unless they have fewer than `MIN_HUB_ITEMS`, in which case they are `noindex,follow`. `/search/` is always `noindex`.
 - **Structured data.**
@@ -32,6 +33,17 @@ All the logic lives in `build.py`: fetch → `prepare()` → render → write `_
   - Never emit ratings or reviews. eBay's `primaryProductReviewRating` is third-party data.
 - **Untrusted HTML.** Seller descriptions pass through `clean_html()` (tag allowlist, all attributes stripped). search.js builds DOM with `textContent` only.
 - **Images.** `img(url, width)` routes through Cloudflare's `/cdn-cgi/image/` when `image_transform` is set in `site.toml`. Firefox tracking protection blocks `i.ebayimg.com`, so first-party URLs are required. Without the setting, it uses eBay's `s-l{width}.webp` variants. Only use widths eBay serves: 300, 500, 960 and 1600. `og:image` and JSON-LD keep the direct eBay URL.
+
+## eBay licence
+
+The API Licence Agreement (section 8.1) shaped these rules:
+- Listing data is at most 6 hours old, hence the 6-hourly build.
+- eBay content that is no longer public must be deleted. That is why sold pages keep only an id, URL, seller and category, and why `.cache/prices.json` is deleted on every live run. Don't keep price history.
+- The price-lowered indicator comes only from eBay's own markdown field, because keeping old prices ourselves breaks that rule.
+- Our own text stays visually separate from eBay content, so hub intros sit in `<section class="intro">`.
+- A public privacy page is required.
+- No framing of eBay pages.
+- No price modelling.
 
 ## Deploy
 

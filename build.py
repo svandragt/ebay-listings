@@ -23,6 +23,9 @@ MARKETPLACES = {  # marketplace id -> (eBay web domain, currency)
     "EBAY_DE": ("www.ebay.de", "EUR"),
     "EBAY_AU": ("www.ebay.com.au", "AUD"),
 }
+EBAY_PRIVACY = {  # marketplace id -> eBay privacy notice; others fall back to the domain's /help home
+    "EBAY_GB": "https://www.ebay.co.uk/help/policies/member-behaviour-policies/user-privacy-notice-privacy-policy?id=4260",
+}
 SYMBOLS = {"GBP": "£", "USD": "$", "EUR": "€", "AUD": "A$"}
 API = "https://api.ebay.com"
 SCOPE = "https://api.ebay.com/oauth/api_scope"
@@ -184,56 +187,55 @@ def fetch_live():
             detail = http(f"{API}/buy/browse/v1/item/{urllib.parse.quote(item_id, safe='')}", headers)
             f.write_text(json.dumps(detail))
             time.sleep(0.2)
-        fresh = {k: s[k] for k in ("title", "price", "condition", "itemWebUrl") if k in s}
+        fresh = {k: s[k] for k in ("title", "price", "condition", "itemWebUrl", "marketingPrice") if k in s}
+        detail = {k: v for k, v in detail.items() if k != "marketingPrice"}  # a markdown that has ended must not linger in the cache
         # Search only returns items that are for sale, so the cached availability would be stale by definition.
         items.append({**detail, **fresh, "estimatedAvailabilities": [{"estimatedAvailabilityStatus": "IN_STOCK"}]})
     return items, sold
 
 
+def sold_stub(wrapper):
+    """The minimal sold wrapper. eBay content must go once it is no longer public, so only what routes the page is kept.
+    Old {"ended", "item"} wrappers are converted."""
+    if "item" not in wrapper:
+        return wrapper
+    i = prepare(wrapper["item"])
+    return {"ended": wrapper["ended"], "id": i["id"], "url": i["url"], "seller": i["seller"], "cat_slug": i["cat_slug"]}
+
+
 def retire_cache(listed, now):
-    """Move cached getItem files of unlisted items to .cache/sold so shared links keep working for SOLD_DAYS.
+    """Turn cached getItem files of unlisted items into minimal .cache/sold wrappers so shared links keep working for SOLD_DAYS.
     Relisted ids lose their sold file. Returns the live sold wrappers."""
     sold_dir = CACHE.parent / "sold"
     sold_dir.mkdir(parents=True, exist_ok=True)
     for f in CACHE.glob("*.json"):
         dest = sold_dir / f.name
         if f.stem not in listed and not dest.exists():
-            dest.write_text(json.dumps({"ended": now.strftime("%Y-%m-%dT%H:%M:%SZ"), "item": json.loads(f.read_text())}))
+            dest.write_text(json.dumps(sold_stub({"ended": now.strftime("%Y-%m-%dT%H:%M:%SZ"), "item": json.loads(f.read_text())})))
         if f.stem not in listed:
             f.unlink()
     sold = []
     for f in sold_dir.glob("*.json"):
-        wrapper = json.loads(f.read_text())
+        old = json.loads(f.read_text())
+        wrapper = sold_stub(old)
         if f.stem in listed or datetime.fromisoformat(wrapper["ended"]) < now - timedelta(days=SOLD_DAYS):
             f.unlink()
         else:
+            if wrapper is not old:
+                f.write_text(json.dumps(wrapper))  # migrate in place, so no getItem copy stays on disk
             sold.append(wrapper)
     return sold
 
 
-def track_prices(history, items, now):
-    """Price history per legacy id. A drop only counts as 'reduced' if the old price had stood for 7 days, so the 'was' price is genuine.
-    The note lasts 14 days. Unlisted items drop out. `items` are getItem-shaped dicts."""
-    ts, new = now.strftime("%Y-%m-%dT%H:%M:%SZ"), {}
-    age = lambda t: now - datetime.fromisoformat(t)
-    for raw in items:
-        price = raw.get("price", {}).get("value")
-        if not price:
-            continue
-        old = history.get(raw["legacyItemId"])
-        if old and float(old["price"]) == float(price):
-            entry = dict(old)
-        else:
-            entry = {"price": price, "since": ts}
-            if old and float(price) < float(old["price"]) and age(old["since"]) >= timedelta(days=7):
-                entry["reduced"] = {"was": old["price"], "on": ts}
-        if "reduced" in entry and age(entry["reduced"]["on"]) >= timedelta(days=14):
-            del entry["reduced"]
-        new[raw["legacyItemId"]] = entry
-    return new
-
-
 # ---------- model ----------
+
+def is_lowered(raw):
+    """True only when eBay's own markdown field (marketingPrice) shows an original price above the current one."""
+    try:
+        return float(raw["marketingPrice"]["originalPrice"]["value"]) > float(raw["price"]["value"])
+    except (KeyError, TypeError, ValueError):
+        return False
+
 
 def prepare(raw):
     """Turn a getItem response into the flat dict the templates use."""
@@ -255,7 +257,7 @@ def prepare(raw):
         "url": f"/item/{item_id}-{slugify(raw['title'])[:60].strip('-')}/",
         "price": price.get("value", ""),
         "currency": currency,
-        "price_text": money(price.get("value", ""), currency),
+        "price_text": money(price.get("value", ""), currency), "lowered": is_lowered(raw),
         "condition": raw.get("condition", ""),
         "condition_id": int(raw.get("conditionId") or 0),
         "cat": cat, "cat_slug": slugify(cat), "cat_parent": "|".join((raw.get("categoryPath") or "").split("|")[:2]),
@@ -390,11 +392,18 @@ def related(items, i):
     return [o for sc, o in sorted((t for t in scored if t[0] >= 2), key=lambda t: -t[0])][:RELATED]
 
 
-def sold_page(out, i, more):
-    crumbs = [("Home", "/"), (i["title"], i["url"])]
-    page(out, i["url"], "sold.html", item=i, related=more, canonical=None, robots="noindex,follow", crumbs=crumbs,
-         jsonld=[crumb_ld(crumbs)], title=f"{i['title']} | {C['site_name']}", og_image=i["image"],
-         description=f"{i['title']} has sold, or the listing has ended."[:160])
+def sold_page(out, w, more):
+    crumbs = [("Home", "/"), ("Listing ended", w["url"])]
+    page(out, w["url"], "sold.html", item=w, related=more, canonical=None, robots="noindex,follow", crumbs=crumbs,
+         jsonld=[crumb_ld(crumbs)], title=f"Listing ended | {C['site_name']}", description="This listing has ended.")
+
+
+def privacy_page(out):
+    sellers = C["sellers"]
+    who = ", ".join(sellers[:-1]) + " and " + sellers[-1] if len(sellers) > 1 else sellers[0]
+    page(out, "/privacy/", "privacy.html", title=f"Privacy | {C['site_name']}", description="How this site handles your data.",
+         robots="noindex,follow", crumbs=[], sellers=who,
+         ebay_privacy=EBAY_PRIVACY.get(C["marketplace"], f"https://{C['domain']}/help"))
 
 
 def item_page(out, i, more):
@@ -476,7 +485,7 @@ def merge_brands(items):
             i["brand_slug"] = slugify(i["brand"])
 
 
-def build(items, out, sold=(), prices=None):
+def build(items, out, sold=()):
     env.globals["style"] = STYLE
     env.globals["built"] = datetime.now(timezone.utc)
     # Set by GitHub Actions, so each fork links to its own repo without extra config.
@@ -486,9 +495,6 @@ def build(items, out, sold=(), prices=None):
     shutil.rmtree(out, ignore_errors=True)
     items = sorted((prepare(r) for r in items), key=lambda i: i["created"], reverse=True)
     sitemap = []
-    for i in items:
-        was = ((prices or {}).get(i["id"]) or {}).get("reduced")
-        i["was_text"] = money(was["was"], i["currency"]) if was else None
     merge_brands(items)
     cats, brands = group(items, "cat_slug", "cat"), group(items, "brand_slug", "brand")
     groups = [("Categories", [(n, f"/category/{s}/", len(g)) for n, s, g in cats]),
@@ -509,10 +515,12 @@ def build(items, out, sold=(), prices=None):
         item_page(out, i, related(items, i))
     live_ids = {i["id"] for i in items}
     for w in sold:
-        s = prepare(w["item"])
-        if s["id"] not in live_ids:  # live wins if the item came back
-            sold_page(out, s, related(items, s))
+        if w["id"] not in live_ids:  # live wins if the item came back
+            # Category only: no title, brand or parent, so the seller and title words never count as relevance.
+            stub = {"id": w["id"], "cat_slug": w["cat_slug"], "seller": w["seller"], "title": "", "brand": None, "cat_parent": ""}
+            sold_page(out, w, related(items, stub))
 
+    privacy_page(out)
     page(out, "/search/", "search.html", title=f"Search | {C['site_name']}", description="Search listings.", robots="noindex,follow", crumbs=[])
     page(out, "/404.html", "notfound.html", title=f"Not found | {C['site_name']}", description="Page not found.", robots="noindex,follow", canonical=None)
     write(out, "/search.json", json.dumps([{"id": i["id"], "title": i["title"], "price": i["price_text"], "url": i["url"],
@@ -535,24 +543,20 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", default=str(ROOT / "site.toml"))
     ap.add_argument("--fixture", help="JSON list of getItem responses; skips the eBay API")
-    ap.add_argument("--sold", help="JSON list of {ended, item} wrappers to render as sold pages (with --fixture)")
-    ap.add_argument("--prices", help="JSON price history file to read and update; fixture mode uses none without it")
+    ap.add_argument("--sold", help="JSON list of {ended, id, url, seller, cat_slug} wrappers to render as sold pages (with --fixture)")
     ap.add_argument("--out", default=str(ROOT / "_site"))
     args = ap.parse_args()
     load_config(args.config)
     try:
         if args.fixture:
-            items, sold = json.loads(Path(args.fixture).read_text()), json.loads(Path(args.sold).read_text()) if args.sold else []
+            items, sold = json.loads(Path(args.fixture).read_text()), [sold_stub(w) for w in json.loads(Path(args.sold).read_text())] if args.sold else []
         else:
+            # Price history held old eBay prices, which are eBay content that is no longer public. Don't bring it back.
+            (CACHE.parent / "prices.json").unlink(missing_ok=True)
             items, sold = fetch_live()
     except OSError as e:  # URLError and HTTPError are OSErrors
         sys.exit(f"fetch failed: {e}")
-    path = Path(args.prices) if args.prices else None if args.fixture else CACHE.parent / "prices.json"
-    prices = track_prices(json.loads(path.read_text()) if path and path.exists() else {}, items, datetime.now(timezone.utc)) if path else {}
-    build(items, args.out, sold=sold, prices=prices)
-    if path:
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(json.dumps(prices))
+    build(items, args.out, sold=sold)
     print(f"built {len(items)} items and {len(sold)} sold pages into {args.out}")
 
 

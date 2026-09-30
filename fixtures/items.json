@@ -124,7 +124,15 @@
     "returnTerms": {
       "returnsAccepted": false
     },
-    "conditionId": "3000"
+    "conditionId": "3000",
+    "marketingPrice": {
+      "originalPrice": {
+        "value": "12.00",
+        "currency": "GBP"
+      },
+      "discountPercentage": "21",
+      "priceTreatment": "MARKDOWN"
+    }
   },
   {
     "itemId": "v1|110000000003|0",

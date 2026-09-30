@@ -2,7 +2,7 @@
 {% from "macros.html" import card %}
 {% block content %}
 <h1>{% if card_url %}<span class="h-card"><span class="p-name">{{ heading }}</span><data class="u-url" value="{{ card_url }}"></data></span>{% else %}{{ heading }}{% endif %}</h1>
-{% for p in intro %}<p>{{ p }}</p>{% else %}<p>{{ summary }}</p>{% endfor %}
+{% if intro %}<section class="intro">{% for p in intro %}<p>{{ p }}</p>{% endfor %}</section>{% else %}<p>{{ summary }}</p>{% endif %}
 {% for group_title, links in link_groups %}{% if links %}
 <h2>{{ group_title }}</h2>
 <ul class="tags">{% for name, url, count in links %}<li><a href="{{ url }}">{{ name }} ({{ count }})</a></li>{% endfor %}</ul>
