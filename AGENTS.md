@@ -1,6 +1,6 @@
 # AGENTS.md
 
-This file gives guidance to coding agents (Claude Code and others) working in this repository.
+This file gives guidance to coding agents (Claude Code and others) working on tinystorefront, a static storefront for eBay sellers. `site.toml` holds one instance's settings; everything else is shared code.
 
 ## Commands
 

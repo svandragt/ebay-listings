@@ -1,6 +1,8 @@
-# eBay listings site
+# tinystorefront
 
-A static site that turns the listings of your eBay seller accounts into crawlable pages. A Python script fetches the listings from the eBay Browse API and renders plain HTML. GitHub Actions rebuilds the site every six hours and deploys it to Cloudflare Pages.
+A tiny storefront for eBay sellers. It turns the listings of your eBay seller accounts into crawlable landing pages, while buying, payment and delivery stay on eBay. A Python script fetches the listings from the eBay Browse API and renders plain HTML. GitHub Actions rebuilds the site every six hours and deploys it to Cloudflare Pages.
+
+[listings.vandragt.com](https://listings.vandragt.com) is a tinystorefront instance.
 
 Item pages link back to eBay and use the eBay listing as their canonical URL. Category, brand, seller and "new this week" pages are the pages that compete in search. A hub page with fewer than three items is marked `noindex` and left out of the sitemap.
 

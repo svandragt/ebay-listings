@@ -29,7 +29,6 @@ EBAY_PRIVACY = {  # marketplace id -> eBay privacy notice; others fall back to t
 SYMBOLS = {"GBP": "£", "USD": "$", "EUR": "€", "AUD": "A$"}
 API = "https://api.ebay.com"
 SCOPE = "https://api.ebay.com/oauth/api_scope"
-USER_AGENT = "listings.vandragt.com builder"
 ALLOWED_TAGS = {"p", "br", "ul", "ol", "li", "b", "strong", "i", "em", "h2", "h3", "h4", "table", "tr", "td", "th"}
 DROP_TAGS = {"script", "style"}  # content dropped too, not just the tags
 NO_BRAND = {"unbranded", "does not apply", "n/a"}
@@ -118,7 +117,7 @@ def money(value, currency):
 # ---------- fetching ----------
 
 def http(url, headers, data=None, tries=3):
-    req = urllib.request.Request(url, data=data, headers={"User-Agent": USER_AGENT, "Accept-Encoding": "gzip", **headers})
+    req = urllib.request.Request(url, data=data, headers={"User-Agent": f"tinystorefront (+{C['site_url']})", "Accept-Encoding": "gzip", **headers})
     for attempt in range(tries):
         try:
             with urllib.request.urlopen(req, timeout=60) as r:
