@@ -29,7 +29,8 @@ Edit `site.toml`:
 | `site_url` | Public URL of the site. |
 | `site_name` | Name shown in page titles |
 | `marketplace` | `EBAY_GB`, `EBAY_US`, `EBAY_DE` or `EBAY_AU` |
-| `top_category_ids` | Optional. Category IDs to search for each seller. Check the counts against your shop page. |
+| `top_category_ids` | Optional. Category IDs to search for each seller. By default the build reads every top-level category from the eBay Taxonomy API. |
+| `image_transform` | Optional. URL prefix for a first-party image resizer, with `{width}` filled in, for example `/cdn-cgi/image/width={width},quality=80,format=auto/`. Tracker blockers hide images from `i.ebayimg.com`, so this keeps them visible. It needs Cloudflare Images transformations on the zone, with `i.ebayimg.com` as an allowed origin. Leave it out to link to eBay's images directly. |
 
 To add an intro above a listing page, create `content/{seller|category|brand}/{slug}.md`. Separate paragraphs with a blank line. Without a file, the page shows a line such as "23 listings from 2 shops, updated every 6 hours".
 
