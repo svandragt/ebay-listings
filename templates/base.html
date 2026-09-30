@@ -7,7 +7,7 @@
 <meta name="description" content="{{ description }}">
 {% if robots %}<meta name="robots" content="{{ robots }}">{% endif %}
 {% if canonical %}<link rel="canonical" href="{{ canonical }}">{% endif %}
-<meta property="og:type" content="website">
+{% block og_type %}<meta property="og:type" content="website">{% endblock %}
 <meta property="og:site_name" content="{{ site.site_name }}">
 <meta property="og:title" content="{{ title }}">
 <meta property="og:description" content="{{ description }}">

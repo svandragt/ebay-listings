@@ -21,17 +21,18 @@
     ul.className = "grid";
     hits.slice(0, 96).forEach(function (i) {
       var li = document.createElement("li");
+      li.className = "h-product";
       var a = document.createElement("a");
-      a.href = i.url;
+      a.href = i.url; a.className = "u-url";
       if (i.image) {
         var img = document.createElement("img");
-        img.src = i.image; img.srcset = i.srcset; img.sizes = "(max-width: 40rem) 50vw, 11rem"; img.alt = i.title; img.loading = "lazy"; img.width = img.height = 500;
+        img.className = "u-photo"; img.src = i.image; img.srcset = i.srcset; img.sizes = "(max-width: 40rem) 50vw, 11rem"; img.alt = i.title; img.loading = "lazy"; img.width = img.height = 500;
         a.appendChild(img);
       }
       var h = document.createElement("h2");
-      h.textContent = i.title;
+      h.className = "p-name"; h.textContent = i.title;
       var pr = document.createElement("p");
-      pr.textContent = i.price;
+      pr.className = "p-price"; pr.textContent = i.price;
       a.append(h, pr);
       li.appendChild(a);
       ul.appendChild(li);

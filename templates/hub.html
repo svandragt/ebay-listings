@@ -1,13 +1,13 @@
 {% extends "base.html" %}
 {% macro card(i, n, h) %}
-<li><a href="{{ i.url }}">
-{% if i.image %}<img src="{{ i.thumb }}" srcset="{{ i.thumb_srcset }}" sizes="(max-width: 40rem) 50vw, 11rem" alt="{{ i.title }}" width="500" height="500" loading="{{ 'eager' if n < 4 else 'lazy' }}"{% if n == 0 %} fetchpriority="high"{% endif %}>{% endif %}
-<{{ h }}>{{ i.title }}</{{ h }}>
-<p>{{ i.price_text }}</p>
+<li class="h-product"><a class="u-url" href="{{ i.url }}">
+{% if i.image %}<img class="u-photo" src="{{ i.thumb }}" srcset="{{ i.thumb_srcset }}" sizes="(max-width: 40rem) 50vw, 11rem" alt="{{ i.title }}" width="500" height="500" loading="{{ 'eager' if n < 4 else 'lazy' }}"{% if n == 0 %} fetchpriority="high"{% endif %}>{% endif %}
+<{{ h }} class="p-name">{{ i.title }}</{{ h }}>
+<p class="p-price">{{ i.price_text }}</p>
 </a></li>
 {% endmacro %}
 {% block content %}
-<h1>{{ heading }}</h1>
+<h1>{% if card_url %}<span class="h-card"><span class="p-name">{{ heading }}</span><data class="u-url" value="{{ card_url }}"></data></span>{% else %}{{ heading }}{% endif %}</h1>
 {% for p in intro %}<p>{{ p }}</p>{% else %}<p>{{ summary }}</p>{% endfor %}
 {% for group_title, links in link_groups %}{% if links %}
 <h2>{{ group_title }}</h2>
@@ -15,7 +15,7 @@
 {% endif %}{% endfor %}
 {% if items %}
 {% if link_groups %}<h2>Newest listings</h2>{% endif %}
-<ul class="grid">{% for i in items %}{{ card(i, loop.index0, "h3" if link_groups else "h2") }}{% endfor %}</ul>
+<ul class="grid h-feed">{% for i in items %}{{ card(i, loop.index0, "h3" if link_groups else "h2") }}{% endfor %}</ul>
 {% else %}<p>No listings right now.</p>{% endif %}
 {% if pager %}<nav class="pager" aria-label="Pages">
 {% for n, url in pager %}{% if n == current %}<span aria-current="page">{{ n }}</span>{% else %}<a href="{{ url }}">{{ n }}</a>{% endif %}{% endfor %}

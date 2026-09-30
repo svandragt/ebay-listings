@@ -199,6 +199,7 @@ def prepare(raw):
         "currency": currency,
         "price_text": money(price.get("value", ""), currency),
         "condition": raw.get("condition", ""),
+        "condition_id": int(raw.get("conditionId") or 0),
         "cat": cat, "cat_slug": slugify(cat),
         "brand": brand, "brand_slug": slugify(brand) if brand else None,
         "seller": raw["seller"]["username"],
@@ -212,6 +213,10 @@ def prepare(raw):
         "created": raw.get("itemCreationDate", ""),
         "ebay_url": raw.get("itemWebUrl", ""),
         "ebay_canonical": f"https://{C['domain']}/itm/{item_id}",
+        "shipping": (raw.get("shippingOptions") or [{}])[0].get("shippingCost"),
+        "returns": raw.get("returnTerms"),
+        "gtin": raw.get("gtin"), "mpn": raw.get("mpn"),
+        "area": (raw.get("itemLocation") or {}).get("country"),
         "availability": {"IN_STOCK": "InStock", "OUT_OF_STOCK": "OutOfStock"}.get(status),
     }
 
@@ -253,17 +258,32 @@ def hub(out, sitemap, path, heading, items, kind=None, slug=None, link_groups=()
     thin = len(items) < MIN_HUB_ITEMS
     chunks = [items[i:i + PAGE_SIZE] for i in range(0, len(items), PAGE_SIZE)] or [[]]
     urls = [path if n == 1 else f"{path}page/{n}/" for n in range(1, len(chunks) + 1)]
+    crumbs = [("Home", "/"), (heading, path)] if path != "/" else []
     for n, chunk in enumerate(chunks, 1):
         page(out, urls[n - 1], "hub.html",
              title=f"{heading}{f' - page {n}' if n > 1 else ''} | {C['site_name']}",
              description=description, heading=heading, intro=intro, summary=summary, items=chunk,
              robots="noindex,follow" if thin else None, link_groups=link_groups,
              pager=list(enumerate(urls, 1)) if len(urls) > 1 else [], current=n,
-             crumbs=[("Home", "/"), (heading, path)] if path != "/" else [],
-             jsonld=[item_list(chunk, (n - 1) * PAGE_SIZE + 1), *extra_ld],
+             crumbs=crumbs, card_url=f"https://{C['domain']}/usr/{slug}" if kind == "seller" else None,
+             jsonld=[item_list(chunk, (n - 1) * PAGE_SIZE + 1), *extra_ld, *([crumb_ld(crumbs)] if crumbs else [])],
              og_image=chunk[0]["image"] if chunk else "")
     if not thin:
         sitemap.append((C["site_url"] + path, max(i["created"] for i in items)[:10]))
+
+
+
+
+def condition_type(condition_id):
+    """eBay condition ids: below 2000 new, 2000-2500 refurbished, 2750 and up used (e.g. 4000 "Very Good")."""
+    if not condition_id:
+        return None
+    return "NewCondition" if condition_id < 2000 else "RefurbishedCondition" if condition_id <= 2500 else "UsedCondition"
+
+
+def crumb_ld(crumbs):
+    return {"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [
+        {"@type": "ListItem", "position": n, "name": name, "item": C["site_url"] + p} for n, (name, p) in enumerate(crumbs, 1)]}
 
 
 def item_page(out, i):
@@ -273,20 +293,36 @@ def item_page(out, i):
              "seller": {"@type": "Organization", "name": i["seller"]}}
     if i["availability"]:
         offer["availability"] = "https://schema.org/" + i["availability"]
-    cond = i["condition"].lower()
-    for key, val in (("new", "NewCondition"), ("refurb", "RefurbishedCondition"), ("used", "UsedCondition"), ("pre-owned", "UsedCondition")):
-        if key in cond:
-            offer["itemCondition"] = "https://schema.org/" + val
-            break
+    cond = condition_type(i["condition_id"])
+    if cond:
+        offer["itemCondition"] = "https://schema.org/" + cond
+    country = C["marketplace"][5:]  # EBAY_GB -> GB
+    if i["shipping"]:
+        offer["shippingDetails"] = {"@type": "OfferShippingDetails",
+            "shippingRate": {"@type": "MonetaryAmount", "value": i["shipping"]["value"], "currency": i["shipping"]["currency"]},
+            "shippingDestination": {"@type": "DefinedRegion", "addressCountry": country}}
+    if r := i["returns"]:
+        if r.get("returnsAccepted"):
+            policy = {"returnPolicyCategory": "https://schema.org/MerchantReturnFiniteReturnWindow", "applicableCountry": country,
+                      "returnFees": "https://schema.org/" + ("FreeReturn" if r.get("returnShippingCostPayer") == "SELLER" else "ReturnShippingFees")}
+            if days := (r.get("returnPeriod") or {}).get("value"):
+                policy["merchantReturnDays"] = days
+        else:
+            policy = {"returnPolicyCategory": "https://schema.org/MerchantReturnNotPermitted"}
+        offer["hasMerchantReturnPolicy"] = {"@type": "MerchantReturnPolicy", **policy}
+    if i["area"]:
+        offer["areaServed"] = i["area"]
     product = {"@context": "https://schema.org", "@type": "Product", "name": i["title"], "sku": i["id"],
                "description": (i["text"] or i["title"])[:500], "offers": offer}
     if i["images"]:
         product["image"] = i["images"]
     if i["brand"]:
         product["brand"] = {"@type": "Brand", "name": i["brand"]}
-    crumb_ld = {"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [
-        {"@type": "ListItem", "position": n, "name": name, "item": C["site_url"] + p} for n, (name, p) in enumerate(crumbs, 1)]}
-    page(out, i["url"], "item.html", item=i, canonical=canonical, crumbs=crumbs, jsonld=[product, crumb_ld],
+    for k in ("gtin", "mpn"):
+        if i[k]:
+            product[k] = i[k]
+    page(out, i["url"], "item.html", item=i, canonical=canonical, crumbs=crumbs, jsonld=[product, crumb_ld(crumbs)],
+         og_product={"amount": i["price"], "currency": i["currency"], "condition": (cond or "")[:-9].lower()},
          title=f"{i['title']} | {C['site_name']}", og_image=i["image"],
          description=f"{i['title']} - {i['price_text']}{', ' + i['condition'] if i['condition'] else ''}. Sold by {i['seller']} on eBay."[:160])
 

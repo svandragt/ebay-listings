@@ -57,6 +57,25 @@ assert "</" not in crafted and "<!--" not in crafted and json.loads(crafted)["na
 for f in ("feed.xml", "robots.txt", "404.html", "search.json"):
     assert (out / f).exists(), f
 assert not (out / "CNAME").exists()
-assert re.search(r'<ul class="grid">.*?<img [^>]*srcset="[^"]+ 300w, [^"]+ 500w"', read("/"), re.S)
+assert re.search(r'<ul class="grid h-feed">.*?<img [^>]*srcset="[^"]+ 300w, [^"]+ 500w"', read("/"), re.S)
 assert "<style>:root" in read("/") and 'rel="stylesheet"' not in read("/")
+
+def product(lid):
+    return jsonld(read("/item/" + next(d for d in item_dirs if d.startswith(lid))))[0]
+
+
+hub_ld = jsonld(read("/seller/example-seller-a/"))
+assert "BreadcrumbList" in {j["@type"] for j in hub_ld}
+assert "BreadcrumbList" not in {j["@type"] for j in jsonld(read("/"))}
+assert "h-feed" in read("/seller/example-seller-a/")
+a = read("/item/" + next(d for d in item_dirs if d.startswith("110000000001")))
+assert '<meta property="og:type" content="product">' in a and 'property="product:price:amount" content="24.99"' in a
+assert 'content="used"' in a and 'og:type" content="website"' in read("/")
+assert 'class="h-product' in a
+o1, o2 = product("110000000001")["offers"], product("110000000002")["offers"]
+assert o1["shippingDetails"]["shippingRate"]["value"] == "3.00" and o1["shippingDetails"]["shippingDestination"]["addressCountry"] == "GB"
+assert o1["hasMerchantReturnPolicy"]["returnPolicyCategory"].endswith("MerchantReturnFiniteReturnWindow")
+assert o1["hasMerchantReturnPolicy"]["returnFees"].endswith("ReturnShippingFees") and o1["hasMerchantReturnPolicy"]["merchantReturnDays"] == 30
+assert product("110000000001")["gtin"] == "5012345678900"
+assert o2["hasMerchantReturnPolicy"]["returnPolicyCategory"].endswith("MerchantReturnNotPermitted") and "shippingDetails" not in o2
 print("ok")

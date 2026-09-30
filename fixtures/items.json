@@ -50,7 +50,32 @@
         "estimatedAvailabilityStatus": "IN_STOCK",
         "estimatedAvailableQuantity": 1
       }
-    ]
+    ],
+    "shippingOptions": [
+      {
+        "shippingServiceCode": "Royal Mail Tracked 48",
+        "type": "Economy Delivery",
+        "shippingCost": {
+          "value": "3.00",
+          "currency": "GBP"
+        }
+      }
+    ],
+    "returnTerms": {
+      "returnsAccepted": true,
+      "returnShippingCostPayer": "BUYER",
+      "returnPeriod": {
+        "value": 30,
+        "unit": "CALENDAR_DAY"
+      }
+    },
+    "gtin": "5012345678900",
+    "mpn": "GW-TP1",
+    "itemLocation": {
+      "city": "Leeds",
+      "country": "GB"
+    },
+    "conditionId": "3000"
   },
   {
     "itemId": "v1|110000000002|0",
@@ -95,7 +120,11 @@
         "estimatedAvailabilityStatus": "IN_STOCK",
         "estimatedAvailableQuantity": 1
       }
-    ]
+    ],
+    "returnTerms": {
+      "returnsAccepted": false
+    },
+    "conditionId": "3000"
   },
   {
     "itemId": "v1|110000000003|0",
@@ -140,7 +169,8 @@
         "estimatedAvailabilityStatus": "IN_STOCK",
         "estimatedAvailableQuantity": 1
       }
-    ]
+    ],
+    "conditionId": "3000"
   },
   {
     "itemId": "v1|110000000004|0",
@@ -189,7 +219,8 @@
         "estimatedAvailabilityStatus": "IN_STOCK",
         "estimatedAvailableQuantity": 1
       }
-    ]
+    ],
+    "conditionId": "1000"
   },
   {
     "itemId": "v1|110000000005|0",
@@ -234,7 +265,8 @@
         "estimatedAvailabilityStatus": "IN_STOCK",
         "estimatedAvailableQuantity": 1
       }
-    ]
+    ],
+    "conditionId": "3000"
   },
   {
     "itemId": "v1|110000000006|0",
@@ -279,7 +311,8 @@
         "estimatedAvailabilityStatus": "IN_STOCK",
         "estimatedAvailableQuantity": 1
       }
-    ]
+    ],
+    "conditionId": "1000"
   },
   {
     "itemId": "v1|110000000007|0",
@@ -324,7 +357,8 @@
         "estimatedAvailabilityStatus": "IN_STOCK",
         "estimatedAvailableQuantity": 1
       }
-    ]
+    ],
+    "conditionId": "3000"
   },
   {
     "itemId": "v1|110000000008|0",
@@ -369,6 +403,7 @@
         "estimatedAvailabilityStatus": "IN_STOCK",
         "estimatedAvailableQuantity": 1
       }
-    ]
+    ],
+    "conditionId": "1000"
   }
 ]
