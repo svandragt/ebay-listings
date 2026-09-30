@@ -112,11 +112,20 @@ def money(value, currency):
 
 # ---------- fetching ----------
 
-def http(url, headers, data=None):
+def http(url, headers, data=None, tries=3):
     req = urllib.request.Request(url, data=data, headers={"User-Agent": USER_AGENT, "Accept-Encoding": "gzip", **headers})
-    with urllib.request.urlopen(req, timeout=60) as r:
-        body = r.read()
-        return json.loads(gzip.decompress(body) if r.headers.get("Content-Encoding") == "gzip" else body)
+    for attempt in range(tries):
+        try:
+            with urllib.request.urlopen(req, timeout=60) as r:
+                body = r.read()
+                return json.loads(gzip.decompress(body) if r.headers.get("Content-Encoding") == "gzip" else body)
+        except urllib.error.HTTPError as e:
+            if e.code != 429 and e.code < 500 or attempt == tries - 1:
+                raise
+        except (urllib.error.URLError, ConnectionError, TimeoutError):  # eBay resets connections now and then; one retry usually clears it
+            if attempt == tries - 1:
+                raise
+        time.sleep(2 ** attempt * 5)
 
 
 def top_categories(headers):
