@@ -11,7 +11,9 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 from markupsafe import Markup
 
 ROOT = Path(__file__).parent
-CACHE = ROOT / ".cache" / "items"
+CACHE = ROOT / ".cache" / "items"  # sold items live next to it in .cache/sold
+SOLD_DAYS = 30
+RELATED = 6
 ITEM_CANONICAL = "ebay"  # "self" if Search Console shows our item pages would rank better
 MIN_HUB_ITEMS = 3
 PAGE_SIZE = 48
@@ -172,10 +174,7 @@ def fetch_live():
     # ponytail: description and aspects only refresh on a cache miss, so edits made on eBay show up late.
     # Upgrade path: compare itemEndDate/lastModified against the cached copy if that becomes a problem.
     CACHE.mkdir(parents=True, exist_ok=True)
-    listed = {legacy_id(item_id.split("|")[1]) for item_id in summaries}
-    for f in CACHE.glob("*.json"):
-        if f.stem not in listed:
-            f.unlink()
+    sold = retire_cache({legacy_id(item_id.split("|")[1]) for item_id in summaries}, datetime.now(timezone.utc))
     items = []
     for item_id, s in summaries.items():
         f = CACHE / f"{legacy_id(item_id.split('|')[1])}.json"
@@ -188,7 +187,50 @@ def fetch_live():
         fresh = {k: s[k] for k in ("title", "price", "condition", "itemWebUrl") if k in s}
         # Search only returns items that are for sale, so the cached availability would be stale by definition.
         items.append({**detail, **fresh, "estimatedAvailabilities": [{"estimatedAvailabilityStatus": "IN_STOCK"}]})
-    return items
+    return items, sold
+
+
+def retire_cache(listed, now):
+    """Move cached getItem files of unlisted items to .cache/sold so shared links keep working for SOLD_DAYS.
+    Relisted ids lose their sold file. Returns the live sold wrappers."""
+    sold_dir = CACHE.parent / "sold"
+    sold_dir.mkdir(parents=True, exist_ok=True)
+    for f in CACHE.glob("*.json"):
+        dest = sold_dir / f.name
+        if f.stem not in listed and not dest.exists():
+            dest.write_text(json.dumps({"ended": now.strftime("%Y-%m-%dT%H:%M:%SZ"), "item": json.loads(f.read_text())}))
+        if f.stem not in listed:
+            f.unlink()
+    sold = []
+    for f in sold_dir.glob("*.json"):
+        wrapper = json.loads(f.read_text())
+        if f.stem in listed or datetime.fromisoformat(wrapper["ended"]) < now - timedelta(days=SOLD_DAYS):
+            f.unlink()
+        else:
+            sold.append(wrapper)
+    return sold
+
+
+def track_prices(history, items, now):
+    """Price history per legacy id. A drop only counts as 'reduced' if the old price had stood for 7 days, so the 'was' price is genuine.
+    The note lasts 14 days. Unlisted items drop out. `items` are getItem-shaped dicts."""
+    ts, new = now.strftime("%Y-%m-%dT%H:%M:%SZ"), {}
+    age = lambda t: now - datetime.fromisoformat(t)
+    for raw in items:
+        price = raw.get("price", {}).get("value")
+        if not price:
+            continue
+        old = history.get(raw["legacyItemId"])
+        if old and float(old["price"]) == float(price):
+            entry = dict(old)
+        else:
+            entry = {"price": price, "since": ts}
+            if old and float(price) < float(old["price"]) and age(old["since"]) >= timedelta(days=7):
+                entry["reduced"] = {"was": old["price"], "on": ts}
+        if "reduced" in entry and age(entry["reduced"]["on"]) >= timedelta(days=14):
+            del entry["reduced"]
+        new[raw["legacyItemId"]] = entry
+    return new
 
 
 # ---------- model ----------
@@ -329,7 +371,21 @@ def crumb_ld(crumbs):
         {"@type": "ListItem", "position": n, "name": name, "item": C["site_url"] + p} for n, (name, p) in enumerate(crumbs, 1)]}
 
 
-def item_page(out, i):
+def related(items, i):
+    """Other live items: same category first (items are newest first), then the same seller."""
+    others = [o for o in items if o["id"] != i["id"]]
+    same_cat = [o for o in others if o["cat_slug"] == i["cat_slug"]]
+    return (same_cat + [o for o in others if o["seller"] == i["seller"] and o["cat_slug"] != i["cat_slug"]])[:RELATED]
+
+
+def sold_page(out, i, more):
+    crumbs = [("Home", "/"), (i["title"], i["url"])]
+    page(out, i["url"], "sold.html", item=i, related=more, canonical=None, robots="noindex,follow", crumbs=crumbs,
+         jsonld=[crumb_ld(crumbs)], title=f"{i['title']} | {C['site_name']}", og_image=i["image"],
+         description=f"{i['title']} has sold, or the listing has ended."[:160])
+
+
+def item_page(out, i, more):
     canonical = i["ebay_canonical"] if ITEM_CANONICAL == "ebay" else C["site_url"] + i["url"]
     crumbs = [("Home", "/"), (i["cat"], f"/category/{i['cat_slug']}/"), (i["title"], i["url"])]
     offer = {"@type": "Offer", "url": i["ebay_canonical"], "price": i["price"], "priceCurrency": i["currency"],
@@ -364,7 +420,7 @@ def item_page(out, i):
     for k in ("gtin", "mpn"):
         if i[k]:
             product[k] = i[k]
-    page(out, i["url"], "item.html", item=i, canonical=canonical, crumbs=crumbs, jsonld=[product, crumb_ld(crumbs)],
+    page(out, i["url"], "item.html", item=i, related=more, canonical=canonical, crumbs=crumbs, jsonld=[product, crumb_ld(crumbs)],
          og_product={"amount": i["price"], "currency": i["currency"], "condition": (cond or "")[:-9].lower()},
          title=f"{i['title']} | {C['site_name']}", og_image=i["image"],
          description=f"{i['title']} - {i['price_text']}{', ' + i['condition'] if i['condition'] else ''}. Sold by {i['seller']} on eBay."[:160])
@@ -374,7 +430,7 @@ def headers():
     """Cloudflare Pages _headers. The CSP allows the inlined stylesheet by hash, so style-src needs no 'unsafe-inline'."""
     style_hash = base64.b64encode(hashlib.sha256(str(STYLE).encode()).digest()).decode()
     csp = ("default-src 'self'; img-src 'self' data: https://i.ebayimg.com; "
-           f"style-src 'sha256-{style_hash}'; script-src 'self'; connect-src 'self'; "
+           f"style-src 'sha256-{style_hash}'; script-src 'self' https://static.cloudflareinsights.com; connect-src 'self' https://cloudflareinsights.com; "
            "object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'")
     noindex = "  X-Robots-Tag: noindex\n"
     return ("/*\n"
@@ -408,7 +464,7 @@ def merge_brands(items):
             i["brand_slug"] = slugify(i["brand"])
 
 
-def build(items, out):
+def build(items, out, sold=(), prices=None):
     env.globals["style"] = STYLE
     env.globals["built"] = datetime.now(timezone.utc)
     # Set by GitHub Actions, so each fork links to its own repo without extra config.
@@ -418,6 +474,9 @@ def build(items, out):
     shutil.rmtree(out, ignore_errors=True)
     items = sorted((prepare(r) for r in items), key=lambda i: i["created"], reverse=True)
     sitemap = []
+    for i in items:
+        was = ((prices or {}).get(i["id"]) or {}).get("reduced")
+        i["was_text"] = money(was["was"], i["currency"]) if was else None
     merge_brands(items)
     cats, brands = group(items, "cat_slug", "cat"), group(items, "brand_slug", "brand")
     groups = [("Categories", [(n, f"/category/{s}/", len(g)) for n, s, g in cats]),
@@ -435,7 +494,12 @@ def build(items, out):
     week_ago = (datetime.now(timezone.utc) - timedelta(days=7)).strftime("%Y-%m-%dT%H:%M:%S")
     hub(out, sitemap, "/new/", "New this week", [i for i in items if i["created"] >= week_ago], title="New listings this week")
     for i in items:
-        item_page(out, i)
+        item_page(out, i, related(items, i))
+    live_ids = {i["id"] for i in items}
+    for w in sold:
+        s = prepare(w["item"])
+        if s["id"] not in live_ids:  # live wins if the item came back
+            sold_page(out, s, related(items, s))
 
     page(out, "/search/", "search.html", title=f"Search | {C['site_name']}", description="Search listings.", robots="noindex,follow", crumbs=[])
     page(out, "/404.html", "notfound.html", title=f"Not found | {C['site_name']}", description="Page not found.", robots="noindex,follow", canonical=None)
@@ -459,15 +523,25 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", default=str(ROOT / "site.toml"))
     ap.add_argument("--fixture", help="JSON list of getItem responses; skips the eBay API")
+    ap.add_argument("--sold", help="JSON list of {ended, item} wrappers to render as sold pages (with --fixture)")
+    ap.add_argument("--prices", help="JSON price history file to read and update; fixture mode uses none without it")
     ap.add_argument("--out", default=str(ROOT / "_site"))
     args = ap.parse_args()
     load_config(args.config)
     try:
-        items = json.loads(Path(args.fixture).read_text()) if args.fixture else fetch_live()
+        if args.fixture:
+            items, sold = json.loads(Path(args.fixture).read_text()), json.loads(Path(args.sold).read_text()) if args.sold else []
+        else:
+            items, sold = fetch_live()
     except OSError as e:  # URLError and HTTPError are OSErrors
         sys.exit(f"fetch failed: {e}")
-    build(items, args.out)
-    print(f"built {len(items)} items into {args.out}")
+    path = Path(args.prices) if args.prices else None if args.fixture else CACHE.parent / "prices.json"
+    prices = track_prices(json.loads(path.read_text()) if path and path.exists() else {}, items, datetime.now(timezone.utc)) if path else {}
+    build(items, args.out, sold=sold, prices=prices)
+    if path:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(prices))
+    print(f"built {len(items)} items and {len(sold)} sold pages into {args.out}")
 
 
 if __name__ == "__main__":

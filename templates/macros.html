@@ -1,0 +1,11 @@
+{% macro card(i, n, h) %}
+<li class="h-product"><a class="u-url" href="{{ i.url }}">
+{% if i.image %}<img class="u-photo" src="{{ i.thumb }}" srcset="{{ i.thumb_srcset }}" sizes="(max-width: 40rem) 50vw, 11rem" alt="{{ i.title }}" width="500" height="500" loading="{{ 'eager' if n < 4 else 'lazy' }}"{% if n == 0 %} fetchpriority="high"{% endif %}>{% endif %}
+<{{ h }} class="p-name">{{ i.title }}</{{ h }}>
+<p class="p-price">{{ i.price_text }}</p>
+</a></li>
+{% endmacro %}
+{% macro more_like_this(items) %}{% if items %}
+<h2>More like this</h2>
+<ul class="grid">{% for i in items %}{# n=4: every image lazy, none high priority #}{{ card(i, 4, "h3") }}{% endfor %}</ul>
+{% endif %}{% endmacro %}

@@ -1,5 +1,6 @@
 """Run with `python test_build.py`. Builds from the fixture into a temp dir and checks the output."""
 import json, re, tempfile
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import build
@@ -8,7 +9,8 @@ ROOT = Path(__file__).parent
 build.load_config(ROOT / "fixtures" / "site.toml")
 items = json.loads((ROOT / "fixtures" / "items.json").read_text())
 out = Path(tempfile.mkdtemp())
-build.build(items, out)
+sold = json.loads((ROOT / "fixtures" / "sold.json").read_text())
+build.build(items, out, sold=sold)
 site = build.C["site_url"]
 
 
@@ -21,11 +23,14 @@ def jsonld(html):
 
 
 item_dirs = sorted(p.name for p in (out / "item").iterdir())
-assert len(item_dirs) == len(items)
+assert len(item_dirs) == len(items) + 1  # live items plus the sold page
+sold_url = build.prepare(sold[0]["item"])["url"]
 assert all(re.fullmatch(r"\d+-[a-z0-9]+(-[a-z0-9]+)*", d) for d in item_dirs), item_dirs
 
 for d in item_dirs:
     lid = d.split("-")[0]
+    if f"/item/{d}/" == sold_url:
+        continue
     html = read(f"/item/{d}/")
     canonical = f"https://{build.C['domain']}/itm/{lid}"
     assert f'<link rel="canonical" href="{canonical}">' in html
@@ -106,4 +111,73 @@ assert "https://:version.:project.pages.dev/*\n  X-Robots-Tag: noindex" in hdr
 assert read("/brand/p-louise/").count('class="h-product"') == 3
 assert f"{site}/brand/p-louise/" in urls and not (out / "brand" / "plouise").exists()
 assert "noindex" not in read("/brand/p-louise/").split("</head>")[0].split('name="robots"')[-1][:40]
+# more like this
+for d in item_dirs:
+    if f"/item/{d}/" == sold_url:
+        continue
+    html = read(f"/item/{d}/")
+    assert html.count("<h2>More like this</h2>") == 1
+    links = re.findall(r'<a class="u-url" href="(/item/[^"]+)">', html.split("<h2>More like this</h2>")[1])
+    assert 0 < len(links) <= 6 and f"/item/{d}/" not in links, (d, links)
+    assert 'fetchpriority="high"' not in html.split("<h2>More like this</h2>")[1]
+    assert "<h3 class=\"p-name\">" in html.split("<h2>More like this</h2>")[1]
+watch = read("/item/" + next(d for d in item_dirs if d.startswith("110000000004"))).split("<h2>More like this</h2>")[1]
+assert watch.index("110000000006") < watch.index("110000000007") and "110000000001" in watch  # same category newest first, then same seller
+
+# sold page
+sp = read(sold_url)
+assert 'name="robots" content="noindex,follow"' in sp and 'rel="canonical"' not in sp
+assert {j["@type"] for j in jsonld(sp)} == {"BreadcrumbList"} and '"Product"' not in sp
+assert "<h1>Casio Vintage Digital Watch, Sold Example</h1>" in sp and "has sold, or the listing has ended" in sp
+assert '<a href="/seller/example-seller-a/">' in sp and "<h2>More like this</h2>" in sp and 'loading="lazy"' in sp
+assert sold_url not in "".join(urls) and sold_url not in (out / "feed.xml").read_text() and sold_url not in (out / "search.json").read_text()
+assert sold_url not in read("/") and sold_url not in read("/category/wristwatches/") and sold_url not in read("/seller/example-seller-a/")
+assert read("/category/wristwatches/").count('class="h-product"') == 3  # the sold item is not counted
+assert "Wristwatches (3)" in read("/")
+live_same_id = [{**sold[0], "item": {**sold[0]["item"], "legacyItemId": "110000000004"}}]
+build.build(items, Path(tempfile.mkdtemp()), sold=live_same_id)  # live wins, no sold page, no crash
+
+# price reduced note
+day = timedelta(days=1)
+raw = lambda price: [{"legacyItemId": "1", "price": {"value": price}}]
+h = build.track_prices({}, raw("15.00"), now := datetime(2026, 9, 1, tzinfo=timezone.utc))
+assert h["1"] == {"price": "15.00", "since": "2026-09-01T00:00:00Z"}
+h8 = build.track_prices(h, raw("12.00"), now + 8 * day)
+assert h8["1"]["reduced"] == {"was": "15.00", "on": "2026-09-09T00:00:00Z"} and h8["1"]["since"] == "2026-09-09T00:00:00Z"
+assert "reduced" not in build.track_prices(h, raw("12.00"), now + 3 * day)["1"]
+assert "reduced" not in build.track_prices(h8, raw("14.00"), now + 10 * day)["1"]  # a rise clears it
+assert "reduced" in build.track_prices(h8, raw("12.00"), now + 21 * day)["1"]
+assert "reduced" not in build.track_prices(h8, raw("12.00"), now + 22 * day)["1"]  # expires after 14 days
+assert build.track_prices(h8, raw("12.00") + [{"legacyItemId": "2", "price": {"value": "1"}}], now + 9 * day).keys() == {"1", "2"}
+assert build.track_prices(h8, [], now + 9 * day) == {}  # delisted items are pruned
+pout = Path(tempfile.mkdtemp())
+build.build(items, pout, prices={"110000000001": {"price": "24.99", "since": "x", "reduced": {"was": "30.00", "on": "x"}}})
+assert '<small class="reduced">Price lowered from £30.00</small>' in (pout / "item").glob("110000000001-*/index.html").__next__().read_text()
+assert 'class="reduced"' not in read("/") and "lowered" not in pout.joinpath("index.html").read_text()  # cards stay plain
+assert "lowered" not in "".join(re.findall(r'ld\+json">(.*?)</script>', (pout / "item").glob("110000000001-*/index.html").__next__().read_text(), re.S))
+
+# Cloudflare Web Analytics
+assert "script-src 'self' https://static.cloudflareinsights.com;" in hdr and "connect-src 'self' https://cloudflareinsights.com;" in hdr
+
+# sold cache lifecycle
+tmp = Path(tempfile.mkdtemp())
+real_cache, build.CACHE = build.CACHE, tmp / "items"
+try:
+    build.CACHE.mkdir()
+    now = datetime(2026, 9, 30, 12, 0, tzinfo=timezone.utc)
+    (build.CACHE / "1.json").write_text('{"legacyItemId": "1"}')
+    (build.CACHE / "2.json").write_text('{"legacyItemId": "2"}')
+    got = build.retire_cache({"2"}, now)  # 1 ends
+    assert [w["item"]["legacyItemId"] for w in got] == ["1"] and got[0]["ended"] == "2026-09-30T12:00:00Z"
+    assert not (build.CACHE / "1.json").exists() and (build.CACHE / "2.json").exists()
+    got = build.retire_cache({"2"}, now + timedelta(days=5))  # keeps the original ended time
+    assert got[0]["ended"] == "2026-09-30T12:00:00Z"
+    got = build.retire_cache({"1", "2"}, now + timedelta(days=6))  # relisted
+    assert got == [] and not (tmp / "sold" / "1.json").exists()
+    (build.CACHE / "1.json").write_text('{"legacyItemId": "1"}')
+    build.retire_cache({"2"}, now)
+    assert len(build.retire_cache({"2"}, now + timedelta(days=29))) == 1
+    assert build.retire_cache({"2"}, now + timedelta(days=31)) == [] and not list((tmp / "sold").glob("*.json"))
+finally:
+    build.CACHE = real_cache
 print("ok")

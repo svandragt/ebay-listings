@@ -61,6 +61,8 @@ On the **Variables** tab, add `CF_PAGES_PROJECT` with your Pages project name.
 
 The site includes a `404.html`. Cloudflare Pages serves it with a 404 status for unknown paths.
 
+To see visits, enable Web Analytics on the Pages project. It sets no cookies, and the CSP already allows its script.
+
 ## Use this for your own eBay listings
 
 1. Fork the repository.

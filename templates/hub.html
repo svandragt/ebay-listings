@@ -1,11 +1,5 @@
 {% extends "base.html" %}
-{% macro card(i, n, h) %}
-<li class="h-product"><a class="u-url" href="{{ i.url }}">
-{% if i.image %}<img class="u-photo" src="{{ i.thumb }}" srcset="{{ i.thumb_srcset }}" sizes="(max-width: 40rem) 50vw, 11rem" alt="{{ i.title }}" width="500" height="500" loading="{{ 'eager' if n < 4 else 'lazy' }}"{% if n == 0 %} fetchpriority="high"{% endif %}>{% endif %}
-<{{ h }} class="p-name">{{ i.title }}</{{ h }}>
-<p class="p-price">{{ i.price_text }}</p>
-</a></li>
-{% endmacro %}
+{% from "macros.html" import card %}
 {% block content %}
 <h1>{% if card_url %}<span class="h-card"><span class="p-name">{{ heading }}</span><data class="u-url" value="{{ card_url }}"></data></span>{% else %}{{ heading }}{% endif %}</h1>
 {% for p in intro %}<p>{{ p }}</p>{% else %}<p>{{ summary }}</p>{% endfor %}

@@ -22,6 +22,7 @@ button, .buy { padding: 0.35rem 0.75rem; border: 0; border-radius: 4px; backgrou
 .tags a { display: inline-block; padding: 0.15rem 0.6rem; border: 1px solid var(--line); border-radius: 1rem; text-decoration: none; font-size: 0.9rem; }
 .pager { display: flex; flex-wrap: wrap; gap: 0.5rem; }
 .pager [aria-current] { font-weight: 700; }
+.reduced { color: var(--muted); }
 .price { font-size: 1.5rem; font-weight: 700; margin: 0.25rem 0; }
 .gallery { display: flex; gap: 0.5rem; overflow-x: auto; }
 .gallery img { flex: none; width: min(24rem, 100%); height: auto; aspect-ratio: 1; object-fit: contain; background: #f3f3f3; }

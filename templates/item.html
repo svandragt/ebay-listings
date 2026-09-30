@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "macros.html" import more_like_this %}
 {% block og_type %}<meta property="og:type" content="product">
 <meta property="product:price:amount" content="{{ og_product.amount }}">
 <meta property="product:price:currency" content="{{ og_product.currency }}">
@@ -7,7 +8,7 @@
 {% block content %}
 <article class="h-product">
 <h1 class="p-name">{{ item.title }}</h1>
-<p class="price"><span class="p-price">{{ item.price_text }}</span>{% if item.condition %} <small>{{ item.condition }}</small>{% endif %}</p>
+<p class="price"><span class="p-price">{{ item.price_text }}</span>{% if item.was_text %} <small class="reduced">Price lowered from {{ item.was_text }}</small>{% endif %}{% if item.condition %} <small>{{ item.condition }}</small>{% endif %}</p>
 <p>Sold by <a href="/seller/{{ item.seller }}/">{{ item.seller }}</a>{% if item.brand %} &middot; Brand: <a class="p-brand" href="/brand/{{ item.brand_slug }}/">{{ item.brand }}</a>{% endif %}</p>
 {% if item.images %}<div class="gallery">
 {% for img in item.gallery %}<img class="u-photo" src="{{ img.src }}" srcset="{{ img.srcset }}" sizes="(max-width: 26rem) 100vw, 24rem" alt="{{ item.title }}" width="800" height="800"{% if loop.first %} fetchpriority="high"{% else %} loading="lazy"{% endif %}>{% endfor %}
@@ -17,5 +18,6 @@
 <table>{% for name, value in item.specs %}<tr><th>{{ name }}</th><td>{{ value }}</td></tr>{% endfor %}</table>{% endif %}
 {% if item.desc %}<h2>Description</h2>
 <div class="e-description">{{ item.desc }}</div>{% endif %}
+{{ more_like_this(related) }}
 </article>
 {% endblock %}
