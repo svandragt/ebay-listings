@@ -87,6 +87,13 @@ def clean_html(s):
     return "".join(p.out) + "".join(f"</{t}>" for t in reversed(p.stack))
 
 
+def img(url, width):
+    """Route through the site's image transform when configured, so blockers see a first-party URL."""
+    if t := C.get("image_transform"):
+        return t.format(width=width) + url
+    return re.sub(r"s-l\d+\.\w+", f"s-l{width}.webp", url)  # eBay serves sized variants by URL
+
+
 def money(value, currency):
     return f"{SYMBOLS.get(currency, currency + ' ')}{value}"
 
@@ -191,7 +198,8 @@ def prepare(raw):
         "brand": brand, "brand_slug": slugify(brand) if brand else None,
         "seller": raw["seller"]["username"],
         "images": images, "image": images[0] if images else "",
-        "thumb": re.sub(r"s-l\d+\.\w+", "s-l500.webp", images[0]) if images else "",  # eBay serves sized variants by URL
+        "thumb": img(images[0], 500) if images else "",
+        "gallery": [img(u, 1600) for u in images],
         "specs": [(n, v) for n, v in aspects.items()],
         "desc": Markup(desc),
         "text": re.sub(r"\s+", " ", html.unescape(re.sub(r"<[^>]+>", " ", desc))).strip(),
@@ -233,7 +241,7 @@ def item_list(items, start=1):
 def hub(out, sitemap, path, heading, items, kind=None, slug=None, link_groups=(), extra_ld=()):
     """A listing page: paginated, self-canonical, noindex while it has too few items."""
     sellers = len({i["seller"] for i in items})
-    summary = f"{len(items)} listings from {sellers} shop{'' if sellers == 1 else 's'}, updated nightly"
+    summary = f"{len(items)} listings from {sellers} shop{'' if sellers == 1 else 's'}, updated every 6 hours"
     intro = read_intro(kind, slug) if kind else []
     description = (intro[0] if intro else f"{heading}: {summary}.")[:160]
     thin = len(items) < MIN_HUB_ITEMS

@@ -31,7 +31,7 @@ Edit `site.toml`:
 | `marketplace` | `EBAY_GB`, `EBAY_US`, `EBAY_DE` or `EBAY_AU` |
 | `top_category_ids` | Optional. Category IDs to search for each seller. Check the counts against your shop page. |
 
-To add an intro above a listing page, create `content/{seller|category|brand}/{slug}.md`. Separate paragraphs with a blank line. Without a file, the page shows a line such as "23 listings from 2 shops, updated nightly".
+To add an intro above a listing page, create `content/{seller|category|brand}/{slug}.md`. Separate paragraphs with a blank line. Without a file, the page shows a line such as "23 listings from 2 shops, updated every 6 hours".
 
 ## Refresh rate
 

@@ -4,3 +4,7 @@ site_name = "listings.vandragt.com"
 marketplace = "EBAY_GB"
 # Optional. By default build.py searches every top-level category from eBay's Taxonomy API.
 # top_category_ids = [1, 267, 220]
+# Optional. Serve images through a first-party resizing proxy, so tracker blockers don't hide them.
+# {width} is filled in per image. Needs Cloudflare Images transformations enabled for the zone.
+# Leave it out to link straight to eBay's image CDN.
+image_transform = "/cdn-cgi/image/width={width},quality=80,format=auto/"
