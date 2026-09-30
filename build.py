@@ -275,13 +275,13 @@ def short_title(t, limit=40):
 def hub_description(items, name, n=1):
     """Generated meta description, at most 160 chars. Drops the second title, then the 'including' clause, to fit."""
     sellers = {i["seller"] for i in items}
-    shops = next(iter(sellers)) if len(sellers) == 1 else f"{len(sellers)} eBay shops"
+    who = next(iter(sellers)) if len(sellers) == 1 else f"{len(sellers)} eBay sellers"
     prices = [i for i in items if i["price"]]
     price = f" Prices from {min(prices, key=lambda i: float(i['price']))['price_text']}." if prices else ""
     tail = " Updated every 6 hours." + (f" Page {n}." if n > 1 else "")
     titles = [short_title(i["title"]) for i in items[:2]]
     count = f"{len(items)} listing{'' if len(items) == 1 else 's'}"
-    base = f"{name + ' for sale: ' if name else ''}{count} from {shops}"
+    base = f"{name + ' for sale: ' if name else ''}{count} from {who}"
     options = [f", including {titles[0]}, {titles[1]} and more"] if len(titles) > 1 else []
     options += [f", including {titles[0]} and more"] if titles else []
     options.append("")
@@ -295,7 +295,7 @@ def hub_description(items, name, n=1):
 def hub(out, sitemap, path, heading, items, kind=None, slug=None, link_groups=(), extra_ld=(), title=None):
     """A listing page: paginated, self-canonical, noindex while it has too few items."""
     sellers = len({i["seller"] for i in items})
-    summary = f"{len(items)} listings from {sellers} shop{'' if sellers == 1 else 's'}, updated every 6 hours"
+    summary = f"{len(items)} listings from {sellers} seller{'' if sellers == 1 else 's'}, updated every 6 hours"
     intro = read_intro(kind, slug) if kind else []
     name = heading if kind in ("category", "brand") else ""
     thin = len(items) < MIN_HUB_ITEMS
@@ -333,7 +333,7 @@ def item_page(out, i):
     canonical = i["ebay_canonical"] if ITEM_CANONICAL == "ebay" else C["site_url"] + i["url"]
     crumbs = [("Home", "/"), (i["cat"], f"/category/{i['cat_slug']}/"), (i["title"], i["url"])]
     offer = {"@type": "Offer", "url": i["ebay_canonical"], "price": i["price"], "priceCurrency": i["currency"],
-             "seller": {"@type": "Organization", "name": i["seller"]}}
+             "seller": {"@type": "Person", "name": i["seller"]}}
     if i["availability"]:
         offer["availability"] = "https://schema.org/" + i["availability"]
     cond = condition_type(i["condition_id"])
@@ -425,7 +425,7 @@ def build(items, out):
     tagline = C.get("tagline")
     hub(out, sitemap, "/", tagline or "Listings from " + " and ".join(C["sellers"]), items, link_groups=groups)
     for seller in C["sellers"]:
-        org = {"@context": "https://schema.org", "@type": "Organization", "name": seller,
+        org = {"@context": "https://schema.org", "@type": "Person", "name": seller,
                "url": f"{C['site_url']}/seller/{seller}/", "sameAs": [f"https://{C['domain']}/usr/{seller}"]}
         hub(out, sitemap, f"/seller/{seller}/", seller, [i for i in items if i["seller"] == seller], "seller", seller, extra_ld=[org], title=f"{seller} on eBay")
     for name, slug, g in cats:

@@ -9,4 +9,4 @@ marketplace = "EBAY_GB"
 # Leave it out to link straight to eBay's image CDN.
 image_transform = "/cdn-cgi/image/width={width},quality=80,format=auto/"
 # Optional. Home page H1 and title, in place of "Listings from <sellers>".
-# tagline = "CDs, vinyl and beauty sets from two UK eBay shops"
+# tagline = "CDs, vinyl and beauty sets from two UK eBay sellers"

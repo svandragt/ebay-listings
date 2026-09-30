@@ -24,7 +24,7 @@ All the logic lives in `build.py`: fetch → `prepare()` → render → write `_
 - **Structured data.**
   - JSON-LD goes through `ld()`, which escapes `</`.
   - Items get Product, Offer and BreadcrumbList. The Offer includes shipping and return policy.
-  - Hubs get ItemList and BreadcrumbList, and seller pages get Organization.
+  - Hubs get ItemList and BreadcrumbList, and seller pages get Person (the sellers are individuals, not traders).
   - Condition maps from eBay's numeric `conditionId` in `condition_type()`, not the text.
   - Item pages also carry `og:type=product` tags, and pages carry microformats2 (`h-product`, `h-feed`, `h-card`).
   - Never emit ratings or reviews. eBay's `primaryProductReviewRating` is third-party data.

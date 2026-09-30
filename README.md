@@ -1,6 +1,6 @@
 # eBay listings site
 
-A static site that turns the listings of your eBay shops into crawlable pages. A Python script fetches the listings from the eBay Browse API and renders plain HTML. GitHub Actions rebuilds the site every six hours and deploys it to Cloudflare Pages.
+A static site that turns the listings of your eBay seller accounts into crawlable pages. A Python script fetches the listings from the eBay Browse API and renders plain HTML. GitHub Actions rebuilds the site every six hours and deploys it to Cloudflare Pages.
 
 Item pages link back to eBay and use the eBay listing as their canonical URL. Category, brand, seller and "new this week" pages are the pages that compete in search. A hub page with fewer than three items is marked `noindex` and left out of the sitemap.
 
@@ -15,9 +15,9 @@ python -m http.server -d _site
 python test_build.py
 ```
 
-The `--fixture` option skips the eBay API and loads sample listings. The `fixtures/site.toml` file holds fake shop names for the tests.
+The `--fixture` option skips the eBay API and loads sample listings. The `fixtures/site.toml` file holds fake seller names for the tests.
 
-To build from the live API, set the secrets below and run `python build.py`. The build fails if any shop returns no items or if any request fails, so an outage never replaces the live site with an empty one.
+To build from the live API, set the secrets below and run `python build.py`. The build fails if any seller returns no items or if any request fails, so an outage never replaces the live site with an empty one.
 
 ## Configuration
 
@@ -29,11 +29,11 @@ Edit `site.toml`:
 | `site_url` | Public URL of the site. |
 | `site_name` | Name shown in page titles |
 | `marketplace` | `EBAY_GB`, `EBAY_US`, `EBAY_DE` or `EBAY_AU` |
-| `tagline` | Optional. Short description of the shops. The home page uses it as its title and H1 instead of the default "Listings from ..." heading. |
+| `tagline` | Optional. Short description of the sellers. The home page uses it as its title and H1 instead of the default "Listings from ..." heading. |
 | `top_category_ids` | Optional. Category IDs to search for each seller. By default the build reads every top-level category from the eBay Taxonomy API. |
 | `image_transform` | Optional. URL prefix for a first-party image resizer, with `{width}` filled in, for example `/cdn-cgi/image/width={width},quality=80,format=auto/`. Tracker blockers hide images from `i.ebayimg.com`, so this keeps them visible. It needs Cloudflare Images transformations on the zone, with `i.ebayimg.com` as an allowed origin. Leave it out to link to eBay's images directly. |
 
-To add an intro above a listing page, create `content/{seller|category|brand}/{slug}.md`. Separate paragraphs with a blank line. Without a file, the page shows a line such as "23 listings from 2 shops, updated every 6 hours".
+To add an intro above a listing page, create `content/{seller|category|brand}/{slug}.md`. Separate paragraphs with a blank line. Without a file, the page shows a line such as "23 listings from 2 sellers, updated every 6 hours".
 
 ## Refresh rate
 
@@ -61,7 +61,7 @@ On the **Variables** tab, add `CF_PAGES_PROJECT` with your Pages project name.
 
 The site includes a `404.html`. Cloudflare Pages serves it with a 404 status for unknown paths.
 
-## Use this for your own shops
+## Use this for your own eBay listings
 
 1. Fork the repository.
 2. Edit `site.toml` with your sellers, site URL, site name and marketplace.
