@@ -459,6 +459,8 @@ def headers():
             "  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()\n"
             "  Referrer-Policy: strict-origin-when-cross-origin\n"
             "  X-Content-Type-Options: nosniff\n"
+            # Files under /static/ are referenced with ?v=<content hash>, so a change gets a new URL.
+            "\n/static/*\n  Cache-Control: public, max-age=31536000, immutable\n"
             f"\nhttps://:project.pages.dev/*\n{noindex}"
             f"\nhttps://:version.:project.pages.dev/*\n{noindex}")
 
@@ -486,6 +488,7 @@ def merge_brands(items):
 
 def build(items, out, sold=()):
     env.globals["style"] = STYLE
+    env.globals["js_version"] = hashlib.sha256((ROOT / "static" / "search.js").read_bytes()).hexdigest()[:10]
     env.globals["built"] = datetime.now(timezone.utc)
     # Set by GitHub Actions, so each fork links to its own repo without extra config.
     if repo := os.environ.get("GITHUB_REPOSITORY"):

@@ -196,4 +196,7 @@ try:
     assert rewritten == got[0] and "title" not in old.read_text() and "description" not in old.read_text()
 finally:
     build.CACHE = real_cache
+v = re.search(r'src="/static/search\.js\?v=([0-9a-f]{10})"', read("/")).group(1)
+assert v == build.hashlib.sha256((build.ROOT / "static" / "search.js").read_bytes()).hexdigest()[:10]
+assert "/static/*\n  Cache-Control: public, max-age=31536000, immutable" in (out / "_headers").read_text()
 print("ok")
